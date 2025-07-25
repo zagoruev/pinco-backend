@@ -1,0 +1,33 @@
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { UserSite } from '../user/user-site.entity';
+import { Comment } from '../comment/comment.entity';
+
+@Entity('sites')
+export class Site {
+  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  id: number;
+
+  @Column({ length: 255 })
+  name: string;
+
+  @Column({ length: 255 })
+  license: string;
+
+  @Column({ length: 255, unique: true })
+  domain: string;
+
+  @Column({ default: true })
+  active: boolean;
+
+  @CreateDateColumn()
+  created: Date;
+
+  @UpdateDateColumn()
+  updated: Date;
+
+  @OneToMany(() => UserSite, userSite => userSite.site)
+  userSites: UserSite[];
+
+  @OneToMany(() => Comment, comment => comment.site)
+  comments: Comment[];
+}
