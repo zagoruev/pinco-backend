@@ -1,6 +1,19 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User, UserRole } from './user.entity';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { User } from './user.entity';
 import { Site } from '../site/site.entity';
+
+export enum UserSiteRole {
+  ADMIN = 'ADMIN',
+  COLLABORATOR = 'COLLABORATOR',
+}
 
 @Entity('user_sites')
 export class UserSite {
@@ -14,7 +27,7 @@ export class UserSite {
     type: 'simple-array',
     default: '',
   })
-  roles: UserRole[];
+  roles: UserSiteRole[];
 
   @CreateDateColumn()
   created: Date;
@@ -22,11 +35,11 @@ export class UserSite {
   @UpdateDateColumn()
   updated: Date;
 
-  @ManyToOne(() => User, user => user.userSites)
+  @ManyToOne(() => User, (user) => user.sites)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Site, site => site.userSites)
+  @ManyToOne(() => Site, (site) => site.userSites)
   @JoinColumn({ name: 'site_id' })
   site: Site;
 }

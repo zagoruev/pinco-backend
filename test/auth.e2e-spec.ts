@@ -3,17 +3,12 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthController } from '../src/modules/auth/auth.controller';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { User, UserRole } from '../src/modules/user/user.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
-import { Site } from '../src/modules/site/site.entity';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
-  let authService: AuthService;
 
   const mockUser: User = {
     id: 1,
@@ -28,7 +23,7 @@ describe('AuthController (e2e)', () => {
     secret_expires: null,
     created: new Date(),
     updated: new Date(),
-    userSites: [],
+    sites: [],
     comments: [],
     replies: [],
     commentViews: [],
@@ -39,14 +34,15 @@ describe('AuthController (e2e)', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          load: [() => ({
-            app: {
-              apiPrefix: 'api/v1',
-              cookieSecret: 'test-secret',
-              jwtSecret: 'test-jwt-secret',
-              jwtExpiresIn: '30d',
-            },
-          })],
+          load: [
+            () => ({
+              app: {
+                apiPrefix: 'api/v1',
+                jwtSecret: 'test-jwt-secret',
+                jwtExpiresIn: '30d',
+              },
+            }),
+          ],
         }),
       ],
       controllers: [AuthController],
@@ -55,7 +51,9 @@ describe('AuthController (e2e)', () => {
           provide: AuthService,
           useValue: {
             login: jest.fn().mockResolvedValue({ token: 'test-token' }),
-            loginWithSecret: jest.fn().mockResolvedValue({ token: 'test-token', user: mockUser }),
+            loginWithSecret: jest
+              .fn()
+              .mockResolvedValue({ token: 'test-token', user: mockUser }),
           },
         },
         {
@@ -63,18 +61,17 @@ describe('AuthController (e2e)', () => {
           useValue: {
             get: jest.fn((key: string) => {
               const config: Record<string, string> = {
-                'app.cookieSecret': 'test-secret',
+                'app.jwtSecret': 'test-secret',
               };
               return config[key];
             }),
           },
         },
       ],
-    })
-    .compile();
+    }).compile();
 
     authService = moduleFixture.get<AuthService>(AuthService);
-    
+
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
     app.use(cookieParser('test-secret'));
@@ -107,9 +104,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return 401 without secret', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/auth/login')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/v1/auth/login').expect(401);
     });
   });
 

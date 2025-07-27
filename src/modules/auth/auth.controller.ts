@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Body, Query, Res, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Query,
+  Res,
+  HttpCode,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
@@ -23,11 +33,11 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const { token } = await this.authService.login(loginDto);
-    
+    const { token, user } = await this.authService.login(loginDto);
+
     this.setAuthCookie(response, token);
-    
-    return { message: 'Login successful' };
+
+    return { user: user.id };
   }
 
   @Get('login')
@@ -42,10 +52,10 @@ export class AuthController {
       throw new UnauthorizedException('Secret token is required');
     }
 
-    const { token, user } = await this.authService.loginWithSecret(secret);
-    
+    const { token } = await this.authService.loginWithSecret(secret);
+
     this.setAuthCookie(response, token);
-    
+
     // Redirect to the user's first site or a default URL
     const redirectUrl = '/'; // You may want to make this configurable
     response.redirect(redirectUrl);
@@ -54,14 +64,14 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout and clear cookies' })
-  async logout(@Res({ passthrough: true }) response: Response) {
+  logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('auth-token');
     return { message: 'Logout successful' };
   }
 
   private setAuthCookie(response: Response, token: string) {
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     response.cookie('auth-token', token, {
       httpOnly: true,
       secure: isProduction,

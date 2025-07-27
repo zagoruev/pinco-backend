@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
 import { Reply } from '../reply/reply.entity';
@@ -56,17 +65,17 @@ export class Comment {
   @UpdateDateColumn()
   updated: Date;
 
-  @ManyToOne(() => User, user => user.comments)
+  @ManyToOne(() => User, (user) => user.comments)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Site, site => site.comments)
+  @ManyToOne(() => Site, (site) => site.comments)
   @JoinColumn({ name: 'site_id' })
   site: Site;
 
-  @OneToMany(() => Reply, reply => reply.comment)
+  @OneToMany(() => Reply, (reply) => reply.comment)
   replies: Reply[];
 
-  @OneToMany(() => CommentView, view => view.comment)
+  @OneToMany(() => CommentView, (view) => view.comment)
   views: CommentView[];
 }

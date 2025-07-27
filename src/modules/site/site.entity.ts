@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { UserSite } from '../user/user-site.entity';
 import { Comment } from '../comment/comment.entity';
 
@@ -25,9 +32,9 @@ export class Site {
   @UpdateDateColumn()
   updated: Date;
 
-  @OneToMany(() => UserSite, userSite => userSite.site)
+  @OneToMany(() => UserSite, (userSite) => userSite.site)
   userSites: UserSite[];
 
-  @OneToMany(() => Comment, comment => comment.site)
+  @OneToMany(() => Comment, (comment) => comment.site)
   comments: Comment[];
 }

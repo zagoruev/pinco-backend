@@ -33,10 +33,11 @@ export class AuthService {
       return null;
     }
 
-    // Only ADMIN and SITE_OWNER can login with password
-    const allowedRoles = [UserRole.ADMIN, UserRole.SITE_OWNER];
-    const hasAllowedRole = user.roles.some(role => allowedRoles.includes(role));
-    
+    const allowedRoles = [UserRole.ROOT, UserRole.ADMIN];
+    const hasAllowedRole = user.roles.some((role) =>
+      allowedRoles.includes(role),
+    );
+
     if (!hasAllowedRole) {
       return null;
     }
@@ -44,32 +45,27 @@ export class AuthService {
     return user;
   }
 
-  async login(loginDto: LoginDto): Promise<{ token: string }> {
+  async login(loginDto: LoginDto): Promise<{ token: string; user: User }> {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = await this.tokenService.signToken(user);
-    return { token };
+    const token = this.tokenService.signToken(user);
+    return { token, user };
   }
 
-  async loginWithSecret(secret: string): Promise<{ token: string; user: User }> {
+  async loginWithSecret(
+    secret: string,
+  ): Promise<{ token: string; user: User }> {
     const user = await this.secretService.validateSecretToken(secret);
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid or expired secret token');
     }
 
-    // Get user's sites
-    const userSites = await this.userSiteRepository.find({
-      where: { user_id: user.id },
-      relations: ['site'],
-    });
-
-    const siteIds = userSites.map(us => us.site_id);
-    const token = await this.tokenService.signToken(user, siteIds);
+    const token = this.tokenService.signToken(user);
 
     return { token, user };
   }

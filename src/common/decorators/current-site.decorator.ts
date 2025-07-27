@@ -1,9 +1,9 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Site } from '../../modules/site/site.entity';
+import { Request } from 'express';
 
 export const CurrentSite = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): Site => {
-    const request = ctx.switchToHttp().getRequest();
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest<Request>();
     return request.site;
   },
 );

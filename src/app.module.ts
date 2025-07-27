@@ -1,11 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { HealthModule } from './health/health.module';
+import * as path from 'path';
+import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { appConfig, databaseConfig, emailConfig, screenshotConfig } from './config';
+import { SiteModule } from './modules/site/site.module';
+import { UserModule } from './modules/user/user.module';
+import { ScreenshotModule } from './modules/screenshot/screenshot.module';
+import { CommentModule } from './modules/comment/comment.module';
+import { ReplyModule } from './modules/reply/reply.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import {
+  appConfig,
+  databaseConfig,
+  emailConfig,
+  screenshotConfig,
+} from './config';
 
 @Module({
   imports: [
@@ -28,8 +42,33 @@ import { appConfig, databaseConfig, emailConfig, screenshotConfig } from './conf
       }),
       inject: [ConfigService],
     }),
+    EventEmitterModule.forRoot(),
+    ServeStaticModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => [
+        {
+          rootPath: path.join(
+            __dirname,
+            '..',
+            '..',
+            configService.get('screenshot.baseDir', './screenshots'),
+          ),
+          serveRoot: '/screenshots',
+          serveStaticOptions: {
+            index: false,
+          },
+        },
+      ],
+      inject: [ConfigService],
+    }),
     HealthModule,
     AuthModule,
+    SiteModule,
+    UserModule,
+    ScreenshotModule,
+    CommentModule,
+    ReplyModule,
+    NotificationModule,
   ],
   providers: [
     {

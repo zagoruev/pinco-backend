@@ -69,7 +69,9 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    userSiteRepository = module.get<Repository<UserSite>>(getRepositoryToken(UserSite));
+    userSiteRepository = module.get<Repository<UserSite>>(
+      getRepositoryToken(UserSite),
+    );
     tokenService = module.get<TokenService>(TokenService);
     secretService = module.get<SecretService>(SecretService);
   });
@@ -79,7 +81,10 @@ describe('AuthService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(argon2, 'verify').mockResolvedValue(true);
 
-      const result = await service.validateUser('admin@example.com', 'password');
+      const result = await service.validateUser(
+        'admin@example.com',
+        'password',
+      );
 
       expect(result).toEqual(mockUser);
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -91,7 +96,10 @@ describe('AuthService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(argon2, 'verify').mockResolvedValue(false);
 
-      const result = await service.validateUser('admin@example.com', 'wrong-password');
+      const result = await service.validateUser(
+        'admin@example.com',
+        'wrong-password',
+      );
 
       expect(result).toBeNull();
     });
@@ -111,7 +119,10 @@ describe('AuthService', () => {
     it('should return token for valid login', async () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
 
-      const result = await service.login({ email: 'admin@example.com', password: 'password' });
+      const result = await service.login({
+        email: 'admin@example.com',
+        password: 'password',
+      });
 
       expect(result).toEqual({ token: 'mock-token' });
       expect(tokenService.signToken).toHaveBeenCalledWith(mockUser);
@@ -128,21 +139,25 @@ describe('AuthService', () => {
 
   describe('loginWithSecret', () => {
     it('should return token and user for valid secret', async () => {
-      jest.spyOn(secretService, 'validateSecretToken').mockResolvedValue(mockUser);
+      jest
+        .spyOn(secretService, 'validateSecretToken')
+        .mockResolvedValue(mockUser);
       jest.spyOn(userSiteRepository, 'find').mockResolvedValue([]);
 
       const result = await service.loginWithSecret('valid-secret');
 
       expect(result).toEqual({ token: 'mock-token', user: mockUser });
-      expect(secretService.validateSecretToken).toHaveBeenCalledWith('valid-secret');
+      expect(secretService.validateSecretToken).toHaveBeenCalledWith(
+        'valid-secret',
+      );
     });
 
     it('should throw UnauthorizedException for invalid secret', async () => {
       jest.spyOn(secretService, 'validateSecretToken').mockResolvedValue(null);
 
-      await expect(
-        service.loginWithSecret('invalid-secret'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.loginWithSecret('invalid-secret')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

@@ -1,29 +1,52 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { TokenService } from '../../modules/auth/token.service';
+import { SiteService } from '../../modules/site/site.service';
+
+type RequestWithToken = Request & {
+  signedCookies: {
+    token?: string;
+    [key: string]: unknown;
+  };
+};
 
 @Injectable()
 export class CookieAuthGuard implements CanActivate {
-  constructor(private tokenService: TokenService) {}
+  constructor(
+    private tokenService: TokenService,
+    private siteService: SiteService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<RequestWithToken>();
     const token = this.extractTokenFromCookie(request);
 
-    if (!token) {
-      throw new UnauthorizedException('No authentication token found');
-    }
-
     try {
-      const payload = await this.tokenService.verifyToken(token);
-      request['user'] = payload;
+      const user = this.tokenService.verifyToken(token);
+      const sites = await this.siteService.getUserSites(user.sub);
+
+      request.user = {
+        ...user,
+        sites,
+      };
       return true;
     } catch {
       throw new UnauthorizedException('Invalid authentication token');
     }
   }
 
-  private extractTokenFromCookie(request: Request): string | undefined {
-    return request.signedCookies?.['auth-token'];
+  private extractTokenFromCookie(request: RequestWithToken): string {
+    const token = request.signedCookies.token;
+
+    if (!token) {
+      throw new UnauthorizedException('No authentication token found');
+    }
+
+    return token;
   }
 }

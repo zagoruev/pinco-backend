@@ -62,7 +62,9 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should set cookie and return success message', async () => {
-      jest.spyOn(authService, 'login').mockResolvedValue({ token: 'test-token' });
+      jest
+        .spyOn(authService, 'login')
+        .mockResolvedValue({ token: 'test-token' });
 
       const result = await controller.login(
         { email: 'admin@example.com', password: 'password' },
@@ -106,8 +108,8 @@ describe('AuthController', () => {
   });
 
   describe('logout', () => {
-    it('should clear cookie and return success message', async () => {
-      const result = await controller.logout(response);
+    it('should clear cookie and return success message', () => {
+      const result = controller.logout(response);
 
       expect(result).toEqual({ message: 'Logout successful' });
       expect(response.clearCookie).toHaveBeenCalledWith('auth-token');

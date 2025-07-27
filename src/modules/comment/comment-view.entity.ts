@@ -13,11 +13,11 @@ export class CommentView {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   viewed: Date;
 
-  @ManyToOne(() => Comment, comment => comment.views)
+  @ManyToOne(() => Comment, (comment) => comment.views)
   @JoinColumn({ name: 'comment_id' })
   comment: Comment;
 
-  @ManyToOne(() => User, user => user.commentViews)
+  @ManyToOne(() => User, (user) => user.commentViews)
   @JoinColumn({ name: 'user_id' })
   user: User;
 }

@@ -2,23 +2,32 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
-import { customAlphabet } from 'nanoid';
-
-const generateSecret = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 24);
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SecretService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
-  async generateSecretToken(userId: number): Promise<string> {
-    const secret = generateSecret();
-    
+  async generateSecretToken(userId: number, siteId: number): Promise<string> {
+    const secret = this.jwtService.sign(
+      {
+        userId,
+        siteId,
+      },
+      {
+        secret: this.configService.get('app.jwtSecret'),
+      },
+    );
+
     await this.userRepository.update(userId, {
       secret_token: secret,
-      secret_expires: null, // Persistent token as per requirements
+      secret_expires: null,
     });
 
     return secret;

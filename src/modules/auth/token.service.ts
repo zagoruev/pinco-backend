@@ -7,7 +7,6 @@ export interface TokenPayload {
   sub: number;
   email: string;
   roles: string[];
-  sites?: number[];
 }
 
 @Injectable()
@@ -17,12 +16,11 @@ export class TokenService {
     private configService: ConfigService,
   ) {}
 
-  async signToken(user: User, sites?: number[]): Promise<string> {
-    const payload: TokenPayload = {
+  signToken(user: User): string {
+    const payload = {
       sub: user.id,
       email: user.email,
       roles: user.roles,
-      sites,
     };
 
     return this.jwtService.sign(payload, {
@@ -31,7 +29,7 @@ export class TokenService {
     });
   }
 
-  async verifyToken(token: string): Promise<TokenPayload> {
+  verifyToken(token: string): TokenPayload {
     return this.jwtService.verify(token, {
       secret: this.configService.get('app.jwtSecret'),
     });

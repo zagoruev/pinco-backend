@@ -1,6 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Request } from 'express';
 import { Site } from '../../modules/site/site.entity';
 
 @Injectable()
@@ -11,19 +17,17 @@ export class OriginGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const origin = request.headers.origin || request.headers.referer;
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<Request>();
+    const { user, headers } = request;
+    const origin = headers.origin ?? headers.referer;
 
     if (!origin) {
       throw new ForbiddenException('Origin not provided');
     }
 
-    // Extract domain from origin
     const url = new URL(origin);
     const domain = url.hostname;
 
-    // Check if site exists and is active
     const site = await this.siteRepository.findOne({
       where: { domain, active: true },
     });
@@ -32,13 +36,15 @@ export class OriginGuard implements CanActivate {
       throw new ForbiddenException('Invalid or inactive site');
     }
 
-    // Check if user has access to this site
-    if (user.sites && !user.sites.includes(site.id)) {
+    const canAccessSite = user?.sites.some(
+      (userSite) => userSite.site_id === site.id,
+    );
+
+    if (!canAccessSite) {
       throw new ForbiddenException('User does not have access to this site');
     }
 
-    // Add site to request for later use
-    request['site'] = site;
+    request.site = site;
 
     return true;
   }

@@ -1,13 +1,19 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { UserSite } from './user-site.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
 import { CommentView } from '../comment/comment-view.entity';
 
 export enum UserRole {
+  ROOT = 'ROOT',
   ADMIN = 'ADMIN',
-  SITE_OWNER = 'SITE_OWNER',
-  COMMENTER = 'COMMENTER',
 }
 
 @Entity('users')
@@ -51,15 +57,15 @@ export class User {
   @UpdateDateColumn()
   updated: Date;
 
-  @OneToMany(() => UserSite, userSite => userSite.user)
-  userSites: UserSite[];
+  @OneToMany(() => UserSite, (userSite) => userSite.user)
+  sites: UserSite[];
 
-  @OneToMany(() => Comment, comment => comment.user)
+  @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
 
-  @OneToMany(() => Reply, reply => reply.user)
+  @OneToMany(() => Reply, (reply) => reply.user)
   replies: Reply[];
 
-  @OneToMany(() => CommentView, view => view.user)
+  @OneToMany(() => CommentView, (view) => view.user)
   commentViews: CommentView[];
 }
