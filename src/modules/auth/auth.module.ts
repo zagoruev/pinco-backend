@@ -12,11 +12,13 @@ import { Site } from '../site/site.entity';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
+import { SiteModule } from '../site/site.module';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, UserSite, Site]),
+    SiteModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
