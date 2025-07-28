@@ -105,7 +105,7 @@ export class UserService {
   async findAll(currentUser: RequestUser, siteId?: number): Promise<User[]> {
     const query = this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.userSites', 'userSite')
+      .leftJoinAndSelect('user.sites', 'userSite')
       .leftJoinAndSelect('userSite.site', 'site');
 
     // If SITE_OWNER, only show users from their sites
@@ -125,10 +125,23 @@ export class UserService {
     return query.getMany();
   }
 
+  async listUsers(currentUser: RequestUser, siteId?: number): Promise<User[]> {
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.sites', 'userSite')
+      .leftJoinAndSelect('userSite.site', 'site');
+
+    if (siteId) {
+      query.andWhere('userSite.site_id = :siteId', { siteId });
+    }
+
+    return query.getMany();
+  }
+
   async findOne(id: number, currentUser: RequestUser): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['userSites', 'userSites.site'],
+      relations: ['sites', 'sites.site'],
     });
 
     if (!user) {

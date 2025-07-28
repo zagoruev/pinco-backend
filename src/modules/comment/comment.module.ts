@@ -10,6 +10,7 @@ import { Site } from '../site/site.entity';
 import { ScreenshotModule } from '../screenshot/screenshot.module';
 import { memoryStorage } from 'multer';
 import { SiteModule } from '../site/site.module';
+import { ReplyModule } from '../reply/reply.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SiteModule } from '../site/site.module';
     }),
     ScreenshotModule,
     SiteModule,
+    ReplyModule,
   ],
   controllers: [CommentController],
   providers: [CommentService],

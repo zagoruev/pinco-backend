@@ -1,4 +1,4 @@
-import { CommentDetails, CommentReference } from '../comment.entity';
+import { CommentDetails } from '../comment.entity';
 import { User } from '../../user/user.entity';
 
 export interface CommentResponse {
@@ -9,7 +9,7 @@ export interface CommentResponse {
   user_id: number;
   viewed: Date | null;
   details: CommentDetails | null;
-  reference: CommentReference | null;
+  reference: string | null;
   url: string;
   uniqid: string;
   resolved: boolean;

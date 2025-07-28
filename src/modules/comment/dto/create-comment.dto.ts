@@ -5,24 +5,29 @@ import {
   ValidateNested,
   IsNumber,
   IsUrl,
+  IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 class CommentDetailsDto {
   @ApiProperty({ example: 768 })
+  @Type(() => Number)
   @IsNumber()
   vh: number;
 
   @ApiProperty({ example: 1024 })
+  @Type(() => Number)
   @IsNumber()
   vw: number;
 
   @ApiProperty({ example: 100 })
+  @Type(() => Number)
   @IsNumber()
   vx: number;
 
   @ApiProperty({ example: 200 })
+  @Type(() => Number)
   @IsNumber()
   vy: number;
 
@@ -32,12 +37,14 @@ class CommentDetailsDto {
 }
 
 export class CreateCommentDto {
-  @ApiProperty({ example: 'This needs to be fixed' })
+  @ApiProperty({ example: 'This needs to be fixed', required: true })
   @IsString()
+  @IsNotEmpty()
   message: string;
 
-  @ApiProperty({ example: 'https://example.com/page' })
-  @IsUrl()
+  @ApiProperty({ example: '/page', required: true })
+  @IsUrl({ require_tld: false, require_protocol: false, require_host: false })
+  @IsNotEmpty()
   url: string;
 
   @ApiProperty({ required: false })

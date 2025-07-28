@@ -14,6 +14,7 @@ import { ScreenshotModule } from './modules/screenshot/screenshot.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { ReplyModule } from './modules/reply/reply.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { WidgetModule } from './modules/widget/widget.module';
 import {
   appConfig,
   databaseConfig,
@@ -69,6 +70,7 @@ import {
     CommentModule,
     ReplyModule,
     NotificationModule,
+    WidgetModule,
   ],
   providers: [
     {

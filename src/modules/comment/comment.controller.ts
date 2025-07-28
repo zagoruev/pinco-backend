@@ -2,13 +2,13 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Param,
   Body,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -27,21 +27,38 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentSite } from '../../common/decorators/current-site.decorator';
 import { Site } from '../site/site.entity';
 import { RequestUser } from '../../types/express';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from '../user/user.entity';
 
 @ApiTags('comments')
 @Controller('comments')
-@UseGuards(CookieAuthGuard, OriginGuard)
+@UseGuards(CookieAuthGuard)
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @Get()
+  @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Get all comments for current site' })
   @ApiResponse({ status: 200, description: 'Return all comments' })
   findAll(@CurrentSite() site: Site, @CurrentUser() currentUser: RequestUser) {
     return this.commentService.findAll(site, currentUser);
   }
 
+  @Get('list')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get all comments for the current user' })
+  @ApiResponse({ status: 200, description: 'Return all comments' })
+  list(
+    @CurrentUser() currentUser: RequestUser,
+    @Query('siteId', new ParseIntPipe({ optional: true })) siteId?: number,
+  ) {
+    return this.commentService.listComments(currentUser, siteId);
+  }
+
   @Post()
+  @UseGuards(OriginGuard)
   @UseInterceptors(FileInterceptor('screenshot'))
   @ApiOperation({ summary: 'Create a new comment' })
   @ApiConsumes('multipart/form-data')
@@ -59,7 +76,8 @@ export class CommentController {
     return this.commentService.create(createCommentDto, site, currentUser);
   }
 
-  @Patch(':id')
+  @Post(':id')
+  @UseGuards(OriginGuard)
   @UseInterceptors(FileInterceptor('screenshot'))
   @ApiOperation({ summary: 'Update a comment' })
   @ApiConsumes('multipart/form-data')
@@ -81,6 +99,7 @@ export class CommentController {
   }
 
   @Get(':id/view')
+  @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark comment as viewed by user' })
   @ApiResponse({ status: 200, description: 'Comment marked as viewed' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
@@ -93,6 +112,7 @@ export class CommentController {
   }
 
   @Get(':id/unview')
+  @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark comment as unviewed by user' })
   @ApiResponse({ status: 200, description: 'Comment marked as unviewed' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
@@ -105,6 +125,7 @@ export class CommentController {
   }
 
   @Get('view-all')
+  @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark all site comments as viewed by user' })
   @ApiResponse({ status: 200, description: 'All comments marked as viewed' })
   markAllAsViewed(

@@ -88,7 +88,7 @@ export class SiteService {
 
   async getSiteUsers(siteId: number): Promise<UserSite[]> {
     const site = await this.findOne(siteId);
-    
+
     const userSites = await this.userSiteRepository.find({
       where: { site_id: site.id },
       relations: ['user'],
@@ -98,15 +98,20 @@ export class SiteService {
     return userSites;
   }
 
-  async addUserToSite(siteId: number, addUserToSiteDto: AddUserToSiteDto): Promise<UserSite> {
+  async addUserToSite(
+    siteId: number,
+    addUserToSiteDto: AddUserToSiteDto,
+  ): Promise<UserSite> {
     const site = await this.findOne(siteId);
-    
+
     const user = await this.userRepository.findOne({
       where: { id: addUserToSiteDto.userId },
     });
-    
+
     if (!user) {
-      throw new NotFoundException(`User with ID ${addUserToSiteDto.userId} not found`);
+      throw new NotFoundException(
+        `User with ID ${addUserToSiteDto.userId} not found`,
+      );
     }
 
     // Check if user is already connected to the site
@@ -129,16 +134,22 @@ export class SiteService {
     return this.userSiteRepository.save(userSite);
   }
 
-  async updateUserRoles(siteId: number, userId: number, updateUserRolesDto: UpdateUserRolesDto): Promise<UserSite> {
+  async updateUserRoles(
+    siteId: number,
+    userId: number,
+    updateUserRolesDto: UpdateUserRolesDto,
+  ): Promise<UserSite> {
     const site = await this.findOne(siteId);
-    
+
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id: userId, site_id: site.id },
       relations: ['user', 'site'],
     });
 
     if (!userSite) {
-      throw new NotFoundException(`User with ID ${userId} is not connected to this site`);
+      throw new NotFoundException(
+        `User with ID ${userId} is not connected to this site`,
+      );
     }
 
     userSite.roles = updateUserRolesDto.roles;
@@ -147,13 +158,15 @@ export class SiteService {
 
   async removeUserFromSite(siteId: number, userId: number): Promise<void> {
     const site = await this.findOne(siteId);
-    
+
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id: userId, site_id: site.id },
     });
 
     if (!userSite) {
-      throw new NotFoundException(`User with ID ${userId} is not connected to this site`);
+      throw new NotFoundException(
+        `User with ID ${userId} is not connected to this site`,
+      );
     }
 
     await this.userSiteRepository.remove(userSite);

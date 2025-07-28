@@ -21,12 +21,6 @@ export interface CommentDetails {
   env: string;
 }
 
-export interface CommentReference {
-  x: number;
-  y: number;
-  selector: string;
-}
-
 @Entity('comments')
 export class Comment {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
@@ -48,7 +42,7 @@ export class Comment {
   url: string;
 
   @Column({ type: 'json', nullable: true })
-  reference: CommentReference | null;
+  reference: string | null;
 
   @Column({ type: 'json', nullable: true })
   details: CommentDetails | null;

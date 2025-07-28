@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { customAlphabet } from 'nanoid';
-import { Comment, CommentReference } from './comment.entity';
+import { Comment } from './comment.entity';
 import { CommentView } from './comment-view.entity';
 import { Site } from '../site/site.entity';
 import { Reply } from '../reply/reply.entity';
@@ -16,6 +16,7 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentResponse } from './dto/comment-response.dto';
 import { ScreenshotService } from '../screenshot/screenshot.service';
 import { RequestUser } from '../../types/express';
+import { ReplyService } from '../reply/reply.service';
 
 const generateUniqid = customAlphabet(
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
@@ -31,6 +32,7 @@ export class CommentService {
     private commentViewRepository: Repository<CommentView>,
     @InjectRepository(Reply)
     private replyRepository: Repository<Reply>,
+    private replyService: ReplyService,
     private screenshotService: ScreenshotService,
     private eventEmitter: EventEmitter2,
   ) {}
@@ -44,10 +46,9 @@ export class CommentService {
       .leftJoinAndSelect('comment.user', 'user')
       .leftJoinAndSelect('comment.replies', 'reply')
       .leftJoinAndSelect('reply.user', 'replyUser')
-      .leftJoin('comment.views', 'view', 'view.user_id = :userId', {
+      .leftJoinAndSelect('comment.views', 'view', 'view.user_id = :userId', {
         userId: currentUser.sub,
       })
-      .addSelect('view.viewed')
       .where('comment.site_id = :siteId', { siteId: site.id })
       .orderBy('comment.created', 'DESC')
       .addOrderBy('reply.created', 'ASC')
@@ -74,22 +75,41 @@ export class CommentService {
     });
   }
 
+  async listComments(
+    currentUser: RequestUser,
+    siteId?: number,
+  ): Promise<CommentResponse[]> {
+    const comments = await this.commentRepository
+      .createQueryBuilder('comment')
+      .leftJoinAndSelect('comment.user', 'user')
+      .leftJoinAndSelect('comment.replies', 'reply')
+      .leftJoinAndSelect('reply.user', 'replyUser')
+      .where('comment.site_id = :siteId', { siteId })
+      .orderBy('comment.created', 'DESC')
+      .addOrderBy('reply.created', 'ASC')
+      .getMany();
+
+    return comments.map((comment) => {
+      return {
+        ...comment,
+        viewed: null,
+        screenshot: comment.screenshot
+          ? this.screenshotService.getUrl(comment.screenshot)
+          : undefined,
+        replies: comment.replies.map((reply) => ({
+          ...reply,
+          formatted_message: reply.message,
+        })),
+      };
+    });
+  }
+
   async create(
     createDto: CreateCommentDto,
     site: Site,
     currentUser: RequestUser,
   ): Promise<CommentResponse> {
     const uniqid = generateUniqid();
-
-    // Parse reference if provided
-    let reference: CommentReference | null = null;
-    if (createDto.reference) {
-      try {
-        reference = JSON.parse(createDto.reference) as CommentReference;
-      } catch {
-        throw new BadRequestException('Invalid reference format');
-      }
-    }
 
     // Handle screenshot
     let screenshotFilename: string | null = null;
@@ -109,12 +129,20 @@ export class CommentService {
       site_id: site.id,
       url: createDto.url,
       details: createDto.details || null,
-      reference,
+      reference: createDto.reference || null,
       screenshot: screenshotFilename,
       resolved: false,
     });
 
     const savedComment = await this.commentRepository.save(comment);
+
+    // Create view record
+    const viewed = new Date();
+    await this.commentViewRepository.save({
+      comment_id: savedComment.id,
+      user_id: currentUser.sub,
+      viewed,
+    });
 
     // Load relations for response
     const fullComment = await this.commentRepository.findOne({
@@ -135,7 +163,7 @@ export class CommentService {
     // Format response
     return {
       ...fullComment,
-      viewed: null,
+      viewed,
       screenshot: fullComment.screenshot
         ? this.screenshotService.getUrl(fullComment.screenshot)
         : undefined,
@@ -151,7 +179,7 @@ export class CommentService {
   ): Promise<CommentResponse> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
-      relations: ['user', 'replies', 'replies.user'],
+      relations: ['user', 'replies', 'replies.user', 'views'],
     });
 
     if (!comment) {
@@ -186,30 +214,15 @@ export class CommentService {
     if (updateDto.url !== undefined) comment.url = updateDto.url;
     if (updateDto.resolved !== undefined) comment.resolved = updateDto.resolved;
 
-    // Handle viewed update
-    if (updateDto.viewed !== undefined) {
-      if (updateDto.viewed === null) {
-        // Remove view record
-        await this.commentViewRepository.delete({
-          comment_id: id,
-          user_id: currentUser.sub,
-        });
-      } else {
-        // Update or create view record
-        await this.commentViewRepository.save({
-          comment_id: id,
-          user_id: currentUser.sub,
-          viewed: new Date(updateDto.viewed),
-        });
-      }
-    }
+    const viewRecord = comment.views.find(
+      (view) => view.user_id === currentUser.sub,
+    );
 
     const savedComment = await this.commentRepository.save(comment);
 
-    // Get the viewed timestamp for current user
-    const viewRecord = await this.commentViewRepository.findOne({
-      where: { comment_id: id, user_id: currentUser.sub },
-    });
+    if (comment.resolved && updateDto.resolved) {
+      await this.replyService.addResolveReply(comment, currentUser.sub);
+    }
 
     // Format response
     return {
@@ -228,10 +241,19 @@ export class CommentService {
   ): Promise<{ viewed: Date; user_id: number }> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
+      relations: ['views'],
     });
 
     if (!comment) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
+    }
+
+    const isAlreadyViewed = comment.views.find(
+      (view) => view.user_id === currentUser.sub,
+    );
+
+    if (isAlreadyViewed) {
+      return { viewed: isAlreadyViewed.viewed, user_id: currentUser.sub };
     }
 
     const viewRecord = await this.commentViewRepository.save({

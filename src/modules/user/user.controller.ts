@@ -6,11 +6,11 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
   UseGuards,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,6 +20,9 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserRole } from '../user/user.entity';
 import { RequestUser } from 'src/types/express';
+import { CurrentSite } from 'src/common/decorators/current-site.decorator';
+import { Site } from '../site/site.entity';
+import { OriginGuard } from 'src/common/guards/origin.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -51,15 +54,22 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(OriginGuard)
+  @ApiOperation({ summary: 'Get all site users' })
+  @ApiResponse({ status: 200, description: 'Return all site users' })
+  findAll(@CurrentSite() site: Site, @CurrentUser() currentUser: RequestUser) {
+    return this.userService.findAll(currentUser, site.id);
+  }
+
+  @Get('list')
   @Roles(UserRole.ROOT, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiQuery({ name: 'siteId', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Return all users' })
-  findAll(
+  @ApiOperation({ summary: 'Get all site users' })
+  @ApiResponse({ status: 200, description: 'Return all site users' })
+  listAll(
     @CurrentUser() currentUser: RequestUser,
     @Query('siteId', new ParseIntPipe({ optional: true })) siteId?: number,
   ) {
-    return this.userService.findAll(currentUser, siteId);
+    return this.userService.listUsers(currentUser, siteId);
   }
 
   @Get(':id')

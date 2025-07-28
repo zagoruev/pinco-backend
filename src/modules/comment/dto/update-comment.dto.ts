@@ -4,14 +4,16 @@ import {
   IsObject,
   IsBoolean,
   IsNumber,
-  IsDateString,
+  IsUrl,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CommentDetails, CommentReference } from '../comment.entity';
+import { CommentDetails } from '../comment.entity';
+import { Transform, Type } from 'class-transformer';
 
 export class UpdateCommentDto {
   @ApiProperty({ example: 1, required: true })
   @IsNumber()
+  @Type(() => Number)
   id: number;
 
   @ApiProperty({ example: 'Updated message', required: false })
@@ -21,27 +23,23 @@ export class UpdateCommentDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsDateString()
-  viewed?: string | null;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
   @IsObject()
   details?: CommentDetails;
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsObject()
-  reference?: CommentReference;
-
-  @ApiProperty({ example: 'https://example.com/page', required: false })
-  @IsOptional()
   @IsString()
+  reference?: string | null;
+
+  @ApiProperty({ example: '/page', required: false })
+  @IsOptional()
+  @IsUrl({ require_tld: false, require_protocol: false, require_host: false })
   url?: string;
 
   @ApiProperty({ example: false, required: false })
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   resolved?: boolean;
 
   @ApiProperty({ type: 'string', format: 'binary', required: false })

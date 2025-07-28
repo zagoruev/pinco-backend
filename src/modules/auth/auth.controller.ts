@@ -65,18 +65,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout and clear cookies' })
   logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('auth-token');
+    response.clearCookie('token');
     return { message: 'Logout successful' };
   }
 
   private setAuthCookie(response: Response, token: string) {
-    const isProduction = process.env.NODE_ENV === 'production';
+    // const isProduction = process.env.NODE_ENV === 'production';
 
-    response.cookie('auth-token', token, {
+    response.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'strict',
+      secure: true,
       signed: true,
+      sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
   }

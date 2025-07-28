@@ -13,6 +13,7 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
 import { ReplyResponse } from './dto/reply-response.dto';
 import { RequestUser } from '../../types/express';
+import { isResolveAdded } from './reply.utils';
 
 @Injectable()
 export class ReplyService {
@@ -37,10 +38,30 @@ export class ReplyService {
       id: reply.id,
       comment_id: reply.comment_id,
       message: reply.message,
-      created: reply.created.toISOString(),
-      updated: reply.updated.toISOString(),
+      created: reply.created,
+      updated: reply.updated,
       user_id: reply.user_id,
     }));
+  }
+
+  async listReplies(
+    currentUser: RequestUser,
+    siteId?: number,
+  ): Promise<ReplyResponse[]> {
+    const replies = await this.replyRepository
+      .createQueryBuilder('reply')
+      .leftJoinAndSelect('reply.comment', 'comment')
+      .leftJoinAndSelect('reply.user', 'user')
+      .where('comment.site_id = :siteId', { siteId })
+      .orderBy('reply.created', 'DESC')
+      .getMany();
+
+    return replies.map((reply) => {
+      return {
+        ...reply,
+        formatted_message: reply.message,
+      };
+    });
   }
 
   async create(
@@ -67,6 +88,11 @@ export class ReplyService {
       message: createDto.message,
     });
 
+    if (isResolveAdded(reply.message) && !comment.resolved) {
+      comment.resolved = true;
+      await this.commentRepository.save(comment);
+    }
+
     const savedReply = await this.replyRepository.save(reply);
 
     // Load relations for response
@@ -86,14 +112,17 @@ export class ReplyService {
       site,
     });
 
-    return {
-      id: fullReply.id,
-      comment_id: fullReply.comment_id,
-      message: fullReply.message,
-      created: fullReply.created.toISOString(),
-      updated: fullReply.updated.toISOString(),
-      user_id: fullReply.user_id,
-    };
+    return fullReply;
+  }
+
+  async addResolveReply(comment: Comment, user_id: number): Promise<Reply> {
+    const reply = this.replyRepository.create({
+      comment_id: comment.id,
+      user_id,
+      message: '{{{resolved}}}',
+    });
+
+    return this.replyRepository.save(reply);
   }
 
   async update(
@@ -126,13 +155,6 @@ export class ReplyService {
 
     const savedReply = await this.replyRepository.save(reply);
 
-    return {
-      id: savedReply.id,
-      comment_id: savedReply.comment_id,
-      message: savedReply.message,
-      created: savedReply.created.toISOString(),
-      updated: savedReply.updated.toISOString(),
-      user_id: savedReply.user_id,
-    };
+    return savedReply;
   }
 }
