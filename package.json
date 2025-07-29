@@ -26,7 +26,7 @@
     "migration:generate": "yarn typeorm migration:generate",
     "migration:run": "yarn typeorm migration:run",
     "migration:revert": "yarn typeorm migration:revert",
-    "seed:admin": "ts-node scripts/seed-admin.ts"
+    "seed:root": "ts-node scripts/seed-root.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

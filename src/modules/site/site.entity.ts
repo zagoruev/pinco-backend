@@ -23,6 +23,9 @@ export class Site {
   @Column({ length: 255, unique: true })
   domain: string;
 
+  @Column({ length: 255 })
+  url: string;
+
   @Column({ default: true })
   active: boolean;
 

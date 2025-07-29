@@ -11,11 +11,10 @@ import * as argon2 from 'argon2';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { User, UserRole } from './user.entity';
 import { UserSite, UserSiteRole } from './user-site.entity';
-import { Site } from '../site/site.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { SecretService } from '../auth/secret.service';
 import { RequestUser } from '../../types/express';
+import { UserSiteService } from './user-site.service';
 
 @Injectable()
 export class UserService {
@@ -24,9 +23,7 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(UserSite)
     private userSiteRepository: Repository<UserSite>,
-    @InjectRepository(Site)
-    private siteRepository: Repository<Site>,
-    private secretService: SecretService,
+    private userSiteService: UserSiteService,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -84,13 +81,13 @@ export class UserService {
       await this.userSiteRepository.save(userSites);
     }
 
+    /*
     // Generate invite token if requested
     if (createUserDto.invite) {
-      const secretToken = await this.secretService.generateSecretToken(
+      const secretToken = await this.userSiteService.generateInviteToken(
         savedUser.id,
         savedUser.id,
       );
-      savedUser.secret_token = secretToken;
 
       // Emit event for email notification
       this.eventEmitter.emit('user.invited', {
@@ -98,7 +95,7 @@ export class UserService {
         secretToken,
       });
     }
-
+    */
     return savedUser;
   }
 
@@ -249,7 +246,7 @@ export class UserService {
   ): Promise<{ secretToken: string }> {
     const user = await this.findOne(id, currentUser);
 
-    const secretToken = await this.secretService.generateSecretToken(id, id);
+    const secretToken = await this.userSiteService.generateInviteToken(id, id);
 
     // Get the first site the user is associated with for the invite
     const userSites = await this.userSiteRepository.find({
@@ -271,7 +268,7 @@ export class UserService {
 
   async revokeInvite(id: number, currentUser: RequestUser): Promise<void> {
     await this.findOne(id, currentUser); // Check access
-    await this.secretService.revokeSecretToken(id);
+    // await this.userSiteService.revokeInvite(id);
   }
 
   private async getUserSites(userId: number): Promise<number[]> {

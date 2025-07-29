@@ -10,8 +10,6 @@ import { User } from '../user/user.entity';
 import { UserSite } from '../user/user-site.entity';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
-import { AddUserToSiteDto } from './dto/add-user-to-site.dto';
-import { UpdateUserRolesDto } from './dto/update-user-roles.dto';
 
 @Injectable()
 export class SiteService {
@@ -25,20 +23,27 @@ export class SiteService {
   ) {}
 
   async create(createSiteDto: CreateSiteDto): Promise<Site> {
+    const url = new URL(createSiteDto.url);
+    const domain = url.hostname;
+
     // Check if domain already exists
     const existingSite = await this.siteRepository.findOne({
-      where: { domain: createSiteDto.domain },
+      where: { domain },
     });
 
     if (existingSite) {
       throw new ConflictException('Site with this domain already exists');
     }
 
-    const site = this.siteRepository.create(createSiteDto);
+    const site = this.siteRepository.create({
+      ...createSiteDto,
+      domain,
+    });
+
     return this.siteRepository.save(site);
   }
 
-  async findAll(): Promise<Site[]> {
+  async list(): Promise<Site[]> {
     return this.siteRepository.find({
       order: { created: 'DESC' },
     });
@@ -60,13 +65,18 @@ export class SiteService {
     const site = await this.findOne(id);
 
     // Check if domain is being changed and if it's already taken
-    if (updateSiteDto.domain && updateSiteDto.domain !== site.domain) {
-      const existingSite = await this.siteRepository.findOne({
-        where: { domain: updateSiteDto.domain },
-      });
+    if (updateSiteDto.url) {
+      const url = new URL(updateSiteDto.url);
+      const domain = url.hostname;
 
-      if (existingSite) {
-        throw new ConflictException('Site with this domain already exists');
+      if (domain !== site.domain) {
+        const existingSite = await this.siteRepository.findOne({
+          where: { domain },
+        });
+
+        if (existingSite) {
+          throw new ConflictException('Site with this domain already exists');
+        }
       }
     }
 
@@ -96,79 +106,5 @@ export class SiteService {
     });
 
     return userSites;
-  }
-
-  async addUserToSite(
-    siteId: number,
-    addUserToSiteDto: AddUserToSiteDto,
-  ): Promise<UserSite> {
-    const site = await this.findOne(siteId);
-
-    const user = await this.userRepository.findOne({
-      where: { id: addUserToSiteDto.userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException(
-        `User with ID ${addUserToSiteDto.userId} not found`,
-      );
-    }
-
-    // Check if user is already connected to the site
-    const existingUserSite = await this.userSiteRepository.findOne({
-      where: { user_id: user.id, site_id: site.id },
-    });
-
-    if (existingUserSite) {
-      throw new ConflictException('User is already connected to this site');
-    }
-
-    const userSite = this.userSiteRepository.create({
-      user_id: user.id,
-      site_id: site.id,
-      roles: addUserToSiteDto.roles,
-      user,
-      site,
-    });
-
-    return this.userSiteRepository.save(userSite);
-  }
-
-  async updateUserRoles(
-    siteId: number,
-    userId: number,
-    updateUserRolesDto: UpdateUserRolesDto,
-  ): Promise<UserSite> {
-    const site = await this.findOne(siteId);
-
-    const userSite = await this.userSiteRepository.findOne({
-      where: { user_id: userId, site_id: site.id },
-      relations: ['user', 'site'],
-    });
-
-    if (!userSite) {
-      throw new NotFoundException(
-        `User with ID ${userId} is not connected to this site`,
-      );
-    }
-
-    userSite.roles = updateUserRolesDto.roles;
-    return this.userSiteRepository.save(userSite);
-  }
-
-  async removeUserFromSite(siteId: number, userId: number): Promise<void> {
-    const site = await this.findOne(siteId);
-
-    const userSite = await this.userSiteRepository.findOne({
-      where: { user_id: userId, site_id: site.id },
-    });
-
-    if (!userSite) {
-      throw new NotFoundException(
-        `User with ID ${userId} is not connected to this site`,
-      );
-    }
-
-    await this.userSiteRepository.remove(userSite);
   }
 }

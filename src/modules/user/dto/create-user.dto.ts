@@ -6,7 +6,6 @@ import {
   IsEnum,
   IsArray,
   Length,
-  IsHexColor,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../user.entity';
@@ -20,10 +19,6 @@ export class CreateUserDto {
   @IsString()
   @Length(1, 255)
   name: string;
-
-  @ApiProperty({ example: '#FF0000' })
-  @IsHexColor()
-  color: string;
 
   @ApiProperty({ example: 'johndoe' })
   @IsString()

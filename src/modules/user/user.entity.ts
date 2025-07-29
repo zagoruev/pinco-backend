@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { Expose } from 'class-transformer';
 import { UserSite } from './user-site.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
@@ -15,6 +16,19 @@ export enum UserRole {
   ROOT = 'ROOT',
   ADMIN = 'ADMIN',
 }
+
+export const USER_COLORS = [
+  '#4C53F1',
+  '#119AFA',
+  '#EDAB00',
+  '#D64D4D',
+  '#48B836',
+  '#B865DF',
+  '#ED741C',
+  '#00A0D2',
+  '#E04DAE',
+  '#148F63',
+];
 
 @Entity('users')
 export class User {
@@ -27,8 +41,16 @@ export class User {
   @Column({ length: 255 })
   name: string;
 
-  @Column({ length: 7 })
-  color: string;
+  @Expose()
+  get color(): string {
+    return USER_COLORS[
+      Math.abs(
+        this.email
+          .split('')
+          .reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0),
+      ) % 10
+    ];
+  }
 
   @Column({ length: 255, unique: true })
   username: string;
@@ -44,12 +66,6 @@ export class User {
     default: '',
   })
   roles: UserRole[];
-
-  @Column({ length: 255, nullable: true, type: 'varchar' })
-  secret_token: string | null;
-
-  @Column({ type: 'timestamp', nullable: true })
-  secret_expires: Date | null;
 
   @CreateDateColumn()
   created: Date;

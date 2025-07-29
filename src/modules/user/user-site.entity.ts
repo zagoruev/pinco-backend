@@ -23,6 +23,9 @@ export class UserSite {
   @PrimaryColumn({ type: 'bigint' })
   site_id: number;
 
+  @Column({ type: 'varchar', length: 13, nullable: true, unique: true })
+  invite_code: string | null;
+
   @Column({
     type: 'simple-array',
     default: '',

@@ -18,10 +18,10 @@ export class CreateSiteDto {
   @Length(1, 255)
   license: string;
 
-  @ApiProperty({ example: 'example.com' })
-  @IsString()
+  @ApiProperty({ example: 'https://example.com' })
+  @IsUrl()
   @Length(1, 255)
-  domain: string;
+  url: string;
 
   @ApiProperty({ example: true, required: false })
   @IsBoolean()

@@ -7,7 +7,6 @@ import {
 import { Request } from 'express';
 import { TokenService } from '../../modules/auth/token.service';
 import { SiteService } from '../../modules/site/site.service';
-import { Reflector } from '@nestjs/core';
 
 type RequestWithToken = Request & {
   signedCookies: {
@@ -21,7 +20,6 @@ export class CookieAuthGuard implements CanActivate {
   constructor(
     private tokenService: TokenService,
     private siteService: SiteService,
-    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -37,7 +35,8 @@ export class CookieAuthGuard implements CanActivate {
         sites,
       };
       return true;
-    } catch {
+    } catch (error) {
+      console.error(error);
       throw new UnauthorizedException('Invalid authentication token');
     }
   }

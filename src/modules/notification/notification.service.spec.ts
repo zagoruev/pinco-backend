@@ -62,17 +62,6 @@ describe('NotificationService', () => {
           },
         },
         {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string, defaultValue?: any) => {
-              const config: Record<string, any> = {
-                'app.frontendUrl': 'https://app.pinco.com',
-              };
-              return config[key] || defaultValue;
-            }),
-          },
-        },
-        {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn(),

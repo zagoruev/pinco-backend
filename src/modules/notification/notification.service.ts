@@ -34,10 +34,6 @@ export class NotificationService {
     }
 
     const subject = `${author.name} mentioned you in a ${type} on ${site.name}`;
-    const appUrl = this.configService.get(
-      'app.frontendUrl',
-      'https://app.pinco.com',
-    );
 
     const html = `
       <h2>You were mentioned!</h2>
@@ -62,13 +58,10 @@ export class NotificationService {
   async sendInviteNotification(
     user: User,
     site: Site,
-    secretToken: string,
+    inviteCode: string,
   ): Promise<void> {
-    const appUrl = this.configService.get(
-      'app.frontendUrl',
-      'https://app.pinco.com',
-    );
-    const loginUrl = `${appUrl}/auth/login?token=${secretToken}`;
+    const appUrl = 'https://app.pinco.com';
+    const loginUrl = `${appUrl}/auth/login?code=${inviteCode}`;
 
     const subject = `You've been invited to ${site.name}`;
 

@@ -9,6 +9,8 @@ import {
   UseGuards,
   ParseIntPipe,
   Query,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
@@ -23,12 +25,21 @@ import { RequestUser } from 'src/types/express';
 import { CurrentSite } from 'src/common/decorators/current-site.decorator';
 import { Site } from '../site/site.entity';
 import { OriginGuard } from 'src/common/guards/origin.guard';
+import { UserSiteService } from './user-site.service';
+import { InviteUserDto } from './dto/invite-user.dto';
+import { RevokeInviteDto } from './dto/revoke-invite.dto';
+import { ResendInviteDto } from './dto/resend-invite.dto';
+import { DeleteInviteDto } from './dto/delete-invite.dto';
 
 @ApiTags('users')
 @Controller('users')
 @UseGuards(CookieAuthGuard, RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userSiteService: UserSiteService,
+  ) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user' })
@@ -117,27 +128,53 @@ export class UserController {
     return this.userService.remove(id, currentUser);
   }
 
-  @Post(':id/invite')
+  @Post('invite')
   @Roles(UserRole.ROOT, UserRole.ADMIN)
   @ApiOperation({ summary: 'Send or resend invite to user' })
   @ApiResponse({ status: 200, description: 'Invite sent successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  invite(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
-    return this.userService.invite(id, currentUser);
+  invite(@Body() inviteUserDto: InviteUserDto) {
+    return this.userSiteService.addUserToSite(
+      inviteUserDto.user_id,
+      inviteUserDto.site_id,
+      inviteUserDto.roles,
+      inviteUserDto.invite,
+    );
   }
 
-  @Delete(':id/invite')
+  @Post('invite/delete')
+  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Delete user invite' })
+  @ApiResponse({ status: 200, description: 'Invite deleted successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  deleteInvite(@Body() deleteInviteDto: DeleteInviteDto) {
+    return this.userSiteService.removeUserFromSite(
+      deleteInviteDto.user_id,
+      deleteInviteDto.site_id,
+    );
+  }
+
+  @Post('invite/resend')
+  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Resend invite to user' })
+  @ApiResponse({ status: 200, description: 'Invite resent successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  resendInvite(@Body() resendInviteDto: ResendInviteDto) {
+    return this.userSiteService.inviteUser(
+      resendInviteDto.user_id,
+      resendInviteDto.site_id,
+    );
+  }
+
+  @Post('invite/revoke')
   @Roles(UserRole.ROOT, UserRole.ADMIN)
   @ApiOperation({ summary: 'Revoke user invite' })
   @ApiResponse({ status: 200, description: 'Invite revoked successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  revokeInvite(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
-    return this.userService.revokeInvite(id, currentUser);
+  revokeInvite(@Body() revokeInviteDto: RevokeInviteDto) {
+    return this.userSiteService.revokeInvite(
+      revokeInviteDto.user_id,
+      revokeInviteDto.site_id,
+    );
   }
 }

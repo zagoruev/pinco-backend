@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { USER_COLORS } from '../user/user.entity';
 
 @Injectable()
 export class WidgetService {
@@ -7,20 +8,9 @@ export class WidgetService {
   generateWidgetScript(key: string): string {
     const pincoConfig = {
       apiRoot: 'http://localhost:3001/',
-      // userId: '1',
+      userId: '1',
       key,
-      colors: [
-        '#4C53F1',
-        '#119AFA',
-        '#EDAB00',
-        '#D64D4D',
-        '#48B836',
-        '#B865DF',
-        '#ED741C',
-        '#00A0D2',
-        '#E04DAE',
-        '#148F63',
-      ],
+      colors: USER_COLORS,
       features: ['screenshots', 'details'],
     };
 

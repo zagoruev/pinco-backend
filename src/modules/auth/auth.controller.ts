@@ -14,7 +14,7 @@ import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { SecretLoginDto } from './dto/secret-login.dto';
+import { InviteLoginDto } from './dto/invite-login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -41,24 +41,22 @@ export class AuthController {
   }
 
   @Get('login')
-  @ApiOperation({ summary: 'Login with secret token' })
+  @ApiOperation({ summary: 'Login with invite token' })
   @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid secret token' })
-  async loginWithSecret(
-    @Query() { secret }: SecretLoginDto,
+  @ApiResponse({ status: 401, description: 'Invalid invite token' })
+  async loginWithInvite(
+    @Query() { invite }: InviteLoginDto,
     @Res() response: Response,
   ) {
-    if (!secret) {
-      throw new UnauthorizedException('Secret token is required');
+    if (!invite) {
+      throw new UnauthorizedException('Invite token is required');
     }
 
-    const { token } = await this.authService.loginWithSecret(secret);
+    const { token, userSite } = await this.authService.loginWithInvite(invite);
 
     this.setAuthCookie(response, token);
 
-    // Redirect to the user's first site or a default URL
-    const redirectUrl = '/'; // You may want to make this configurable
-    response.redirect(redirectUrl);
+    response.redirect(userSite.site.url);
   }
 
   @Post('logout')
@@ -70,8 +68,6 @@ export class AuthController {
   }
 
   private setAuthCookie(response: Response, token: string) {
-    // const isProduction = process.env.NODE_ENV === 'production';
-
     response.cookie('token', token, {
       httpOnly: true,
       secure: true,

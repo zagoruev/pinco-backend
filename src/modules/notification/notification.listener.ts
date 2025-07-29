@@ -20,7 +20,7 @@ export interface ReplyCreatedEvent {
 export interface UserInvitedEvent {
   user: User;
   site: Site;
-  secretToken: string;
+  invite_token: string;
 }
 
 @Injectable()
@@ -84,12 +84,12 @@ export class NotificationListener {
 
   @OnEvent('user.invited')
   async handleUserInvited(event: UserInvitedEvent): Promise<void> {
-    const { user, site, secretToken } = event;
+    const { user, site, invite_token } = event;
 
     await this.notificationService.sendInviteNotification(
       user,
       site,
-      secretToken,
+      invite_token,
     );
   }
 }
