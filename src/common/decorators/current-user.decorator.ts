@@ -3,8 +3,8 @@ import { Request } from 'express';
 import { RequestUser } from '../../types/express';
 
 export const CurrentUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): RequestUser => {
+  (data: unknown, ctx: ExecutionContext): RequestUser | undefined => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    return request.user as RequestUser;
+    return request.user;
   },
 );

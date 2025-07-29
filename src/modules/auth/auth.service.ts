@@ -6,7 +6,7 @@ import { User, UserRole } from '../user/user.entity';
 import { TokenService } from './token.service';
 import { LoginDto } from './dto/login.dto';
 import { UserSiteService } from '../user/user-site.service';
-import { UserSite } from '../user/user-site.entity';
+import { Site } from '../site/site.entity';
 
 @Injectable()
 export class AuthService {
@@ -56,7 +56,7 @@ export class AuthService {
 
   async loginWithInvite(
     invite: string,
-  ): Promise<{ token: string; user: User; userSite: UserSite }> {
+  ): Promise<{ token: string; user: User; site: Site }> {
     const { user, userSite } =
       await this.userSiteService.validateInviteToken(invite);
 
@@ -66,6 +66,6 @@ export class AuthService {
 
     const token = this.tokenService.signToken(user);
 
-    return { token, user, userSite };
+    return { token, user, site: userSite.site };
   }
 }

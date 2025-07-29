@@ -101,13 +101,17 @@ export class UserSiteService {
 
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id, site_id, invite_code },
+      relations: ['site'],
+    });
+    const user = await this.userRepository.findOne({
+      where: { id: user_id },
     });
 
-    if (!userSite) {
+    if (!userSite || !user) {
       throw new UnauthorizedException('Invalid invite token');
     }
 
-    return { userSite, user: userSite.user };
+    return { userSite, user };
   }
 
   async getInviteCode(

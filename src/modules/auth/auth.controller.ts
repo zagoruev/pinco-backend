@@ -52,11 +52,11 @@ export class AuthController {
       throw new UnauthorizedException('Invite token is required');
     }
 
-    const { token, userSite } = await this.authService.loginWithInvite(invite);
+    const { token, site } = await this.authService.loginWithInvite(invite);
 
     this.setAuthCookie(response, token);
 
-    response.redirect(userSite.site.url);
+    response.redirect(site.url);
   }
 
   @Post('logout')

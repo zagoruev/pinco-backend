@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn start:dev)"
+      "Bash(yarn start:dev)",
+      "Bash(yarn lint)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
