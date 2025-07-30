@@ -21,6 +21,9 @@ import { UserRole } from '../user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Site } from './site.entity';
+import { UserSite } from '../user/user-site.entity';
+import { Comment } from '../comment/comment.entity';
+import { Reply } from '../reply/reply.entity';
 
 @ApiTags('sites')
 @Controller('sites')
@@ -30,6 +33,12 @@ export class SiteController {
     private readonly siteService: SiteService,
     @InjectRepository(Site)
     private siteRepository: Repository<Site>,
+    @InjectRepository(UserSite)
+    private userSiteRepository: Repository<UserSite>,
+    @InjectRepository(Comment)
+    private commentRepository: Repository<Comment>,
+    @InjectRepository(Reply)
+    private replyRepository: Repository<Reply>,
   ) {}
 
   @Post()
@@ -97,7 +106,34 @@ export class SiteController {
   @ApiOperation({ summary: 'Get all users for a site' })
   @ApiResponse({ status: 200, description: 'Return all users for the site' })
   @ApiResponse({ status: 404, description: 'Site not found' })
-  getSiteUsers(@Param('id', ParseIntPipe) id: number) {
-    return this.siteService.getSiteUsers(id);
+  getSiteUsers(@Param('id', ParseIntPipe) site_id: number) {
+    return this.userSiteRepository.find({
+      where: { site_id },
+      relations: ['user'],
+      order: { created: 'DESC' },
+    });
+  }
+
+  @Get(':id/comments')
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
+  @ApiOperation({ summary: 'Get all comments for a site' })
+  @ApiResponse({ status: 200, description: 'Return all comments for the site' })
+  @ApiResponse({ status: 404, description: 'Site not found' })
+  getSiteComments(@Param('id', ParseIntPipe) site_id: number) {
+    return this.commentRepository.find({ where: { site_id } });
+  }
+
+  @Get(':id/replies')
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
+  @ApiOperation({ summary: 'Get all replies for a site' })
+  @ApiResponse({ status: 200, description: 'Return all replies for the site' })
+  @ApiResponse({ status: 404, description: 'Site not found' })
+  getSiteReplies(@Param('id', ParseIntPipe) site_id: number) {
+    return this.replyRepository.find({
+      where: { comment: { site_id } },
+      relations: ['comment', 'comment.user'],
+    });
   }
 }

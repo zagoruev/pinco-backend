@@ -13,7 +13,7 @@ export class InvitationTemplate extends EmailTemplate<InvitationTemplateData> {
 
   html(data: InvitationTemplateData): string {
     const appUrl = data.appUrl;
-    const loginUrl = `${appUrl}v1/auth/login?invite=${data.inviteCode}`;
+    const loginUrl = `${appUrl}/v1/auth/login?invite=${data.inviteCode}`;
 
     const content = `
       <h2>Welcome to ${this.escapeHtml(data.siteName)}!</h2>

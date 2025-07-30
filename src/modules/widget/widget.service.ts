@@ -50,7 +50,7 @@ export class WidgetService {
 
   generateWidgetScript(key: string, user: RequestUser): string {
     const pincoConfig: PincoConfig = {
-      apiRoot: this.configService.get('app.url'),
+      apiRoot: `${this.configService.get('app.url')}/`,
       colors: USER_COLORS,
       features: ['screenshots', 'details'],
     };

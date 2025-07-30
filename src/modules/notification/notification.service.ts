@@ -54,7 +54,7 @@ export class NotificationService {
     site: Site,
     inviteCode: string,
   ): Promise<void> {
-    const appUrl = `${this.configService.get('app.url')}${this.configService.get('app.apiPrefix')}/`;
+    const appUrl = `${this.configService.get('app.url')}/${this.configService.get('app.apiPrefix')}`;
 
     await this.emailService.sendWithTemplate(
       user.email,

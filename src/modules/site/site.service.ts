@@ -72,16 +72,4 @@ export class SiteService {
       relations: ['site'],
     });
   }
-
-  async getSiteUsers(id: number): Promise<UserSite[]> {
-    const site = await this.siteRepository.findOneOrFail({ where: { id } });
-
-    const userSites = await this.userSiteRepository.find({
-      where: { site_id: site.id },
-      relations: ['user'],
-      order: { created: 'DESC' },
-    });
-
-    return userSites;
-  }
 }
