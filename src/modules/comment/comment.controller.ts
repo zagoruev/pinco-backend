@@ -8,7 +8,6 @@ import {
   UseInterceptors,
   UploadedFile,
   ParseIntPipe,
-  Query,
   SerializeOptions,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -31,14 +30,21 @@ import { RequestUser } from '../../types/express';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from '../user/user.entity';
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Comment } from './comment.entity';
 @ApiTags('comments')
 @Controller('comments')
 @UseGuards(CookieAuthGuard)
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    @InjectRepository(Comment)
+    private commentRepository: Repository<Comment>,
+  ) {}
 
   @Get()
+  @SerializeOptions({ groups: ['widget', 'backoffice'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Get all comments for current site' })
   @ApiResponse({ status: 200, description: 'Return all comments' })
@@ -52,14 +58,12 @@ export class CommentController {
   @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all comments for the current user' })
   @ApiResponse({ status: 200, description: 'Return all comments' })
-  list(
-    @CurrentUser() currentUser: RequestUser,
-    @Query('siteId', new ParseIntPipe({ optional: true })) siteId?: number,
-  ) {
-    return this.commentService.listComments(currentUser, siteId);
+  list() {
+    return this.commentRepository.find();
   }
 
   @Post()
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @UseInterceptors(FileInterceptor('screenshot'))
   @ApiOperation({ summary: 'Create a new comment' })
@@ -79,6 +83,7 @@ export class CommentController {
   }
 
   @Post(':id')
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @UseInterceptors(FileInterceptor(''))
   @ApiOperation({ summary: 'Update a comment' })
@@ -96,6 +101,7 @@ export class CommentController {
   }
 
   @Get(':id/view')
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark comment as viewed by user' })
   @ApiResponse({ status: 200, description: 'Comment marked as viewed' })
@@ -109,6 +115,7 @@ export class CommentController {
   }
 
   @Get(':id/unview')
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark comment as unviewed by user' })
   @ApiResponse({ status: 200, description: 'Comment marked as unviewed' })
@@ -122,6 +129,7 @@ export class CommentController {
   }
 
   @Get('view-all')
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark all site comments as viewed by user' })
   @ApiResponse({ status: 200, description: 'All comments marked as viewed' })

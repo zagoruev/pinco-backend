@@ -6,8 +6,6 @@ import {
   Param,
   UseGuards,
   UseInterceptors,
-  ParseIntPipe,
-  Query,
   SerializeOptions,
 } from '@nestjs/common';
 import {
@@ -30,14 +28,22 @@ import { RequestUser } from '../../types/express';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from '../user/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Reply } from './reply.entity';
 
 @ApiTags('replies')
 @Controller('replies')
 @UseGuards(CookieAuthGuard)
 export class ReplyController {
-  constructor(private readonly replyService: ReplyService) {}
+  constructor(
+    private readonly replyService: ReplyService,
+    @InjectRepository(Reply)
+    private replyRepository: Repository<Reply>,
+  ) {}
 
   @Get()
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Get all replies for current site' })
   @ApiResponse({ status: 200, description: 'Returns all replies' })
@@ -51,14 +57,12 @@ export class ReplyController {
   @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all replies for current site' })
   @ApiResponse({ status: 200, description: 'Returns all replies' })
-  list(
-    @CurrentUser() currentUser: RequestUser,
-    @Query('siteId', new ParseIntPipe({ optional: true })) siteId?: number,
-  ) {
-    return this.replyService.listReplies(currentUser, siteId);
+  list() {
+    return this.replyRepository.find();
   }
 
   @Post()
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   // @TODO: Remove this once we use multipart only for file uploads
   @UseInterceptors(FileInterceptor(''))
@@ -75,6 +79,7 @@ export class ReplyController {
   }
 
   @Post(':id')
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   // @TODO: Remove this once we use multipart only for file uploads
   @UseInterceptors(FileInterceptor(''))

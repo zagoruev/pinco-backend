@@ -53,21 +53,6 @@ export class CommentService {
     });
   }
 
-  async listComments(
-    currentUser: RequestUser,
-    siteId?: number,
-  ): Promise<Comment[]> {
-    return await this.commentRepository
-      .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
-      .leftJoinAndSelect('comment.replies', 'reply')
-      .leftJoinAndSelect('reply.user', 'replyUser')
-      .where('comment.site_id = :siteId', { siteId })
-      .orderBy('comment.created', 'DESC')
-      .addOrderBy('reply.created', 'ASC')
-      .getMany();
-  }
-
   async create(
     createDto: CreateCommentDto,
     site: Site,
@@ -147,21 +132,15 @@ export class CommentService {
     if (updateDto.url !== undefined) comment.url = updateDto.url;
     if (updateDto.resolved !== undefined) comment.resolved = updateDto.resolved;
 
-    const viewRecord = comment.views.find(
-      (view) => view.user_id === currentUser.id,
-    );
-
     const savedComment = await this.commentRepository.save(comment);
 
     if (comment.resolved && updateDto.resolved) {
       await this.replyService.addResolveReply(comment, currentUser.id);
     }
 
-    return {
-      ...savedComment,
-      viewed: viewRecord?.viewed || null,
-      screenshot: this.screenshotService.getUrl(savedComment),
-    };
+    savedComment.screenshot = this.screenshotService.getUrl(savedComment);
+
+    return savedComment;
   }
 
   async markAsViewed(

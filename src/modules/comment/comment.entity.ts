@@ -55,20 +55,29 @@ export class Comment {
   resolved: boolean;
 
   @CreateDateColumn()
-  @Transform(({ value }: { value: Date }) =>
-    value.toISOString().slice(0, 19).replace('T', ' '),
+  @Transform(
+    ({ value }: { value: Date }) =>
+      value.toISOString().slice(0, 19).replace('T', ' '),
+    { groups: ['widget'] },
   )
   created: Date;
 
   @UpdateDateColumn()
-  @Transform(({ value }: { value: Date }) =>
-    value.toISOString().slice(0, 19).replace('T', ' '),
+  @Transform(
+    ({ value }: { value: Date }) =>
+      value.toISOString().slice(0, 19).replace('T', ' '),
+    { groups: ['widget'] },
   )
   updated: Date;
 
   screenshot: string | null;
 
   @Expose()
+  @Transform(
+    ({ value }: { value: Date }) =>
+      value.toISOString().slice(0, 19).replace('T', ' '),
+    { groups: ['widget'] },
+  )
   get viewed(): Date | null {
     return (
       this.views?.find((view) => view.user_id === this.user_id)?.viewed || null

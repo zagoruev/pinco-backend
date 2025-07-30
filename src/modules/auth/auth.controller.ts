@@ -7,7 +7,6 @@ import {
   Res,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -44,10 +43,6 @@ export class AuthController {
     @Query() { invite }: InviteLoginDto,
     @Res() response: Response,
   ) {
-    if (!invite) {
-      throw new UnauthorizedException('Invite token is required');
-    }
-
     const { token, site } = await this.authService.loginWithInvite(invite);
 
     this.authService.setAuthCookie(response, token);

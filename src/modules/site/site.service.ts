@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Site } from './site.entity';
@@ -43,28 +39,9 @@ export class SiteService {
     return this.siteRepository.save(site);
   }
 
-  async list(): Promise<Site[]> {
-    return this.siteRepository.find({
-      order: { created: 'DESC' },
-    });
-  }
-
-  async findOne(id: number): Promise<Site> {
-    const site = await this.siteRepository.findOne({
-      where: { id },
-    });
-
-    if (!site) {
-      throw new NotFoundException(`Site with ID ${id} not found`);
-    }
-
-    return site;
-  }
-
   async update(id: number, updateSiteDto: UpdateSiteDto): Promise<Site> {
-    const site = await this.findOne(id);
+    const site = await this.siteRepository.findOneOrFail({ where: { id } });
 
-    // Check if domain is being changed and if it's already taken
     if (updateSiteDto.url) {
       const url = new URL(updateSiteDto.url);
       const domain = url.hostname;
@@ -85,7 +62,7 @@ export class SiteService {
   }
 
   async remove(id: number): Promise<void> {
-    const site = await this.findOne(id);
+    const site = await this.siteRepository.findOneOrFail({ where: { id } });
     await this.siteRepository.remove(site);
   }
 
@@ -96,8 +73,8 @@ export class SiteService {
     });
   }
 
-  async getSiteUsers(siteId: number): Promise<UserSite[]> {
-    const site = await this.findOne(siteId);
+  async getSiteUsers(id: number): Promise<UserSite[]> {
+    const site = await this.siteRepository.findOneOrFail({ where: { id } });
 
     const userSites = await this.userSiteRepository.find({
       where: { site_id: site.id },

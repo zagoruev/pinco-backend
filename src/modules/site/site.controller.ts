@@ -18,12 +18,19 @@ import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../user/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Site } from './site.entity';
 
 @ApiTags('sites')
 @Controller('sites')
 @UseGuards(CookieAuthGuard, RolesGuard)
 export class SiteController {
-  constructor(private readonly siteService: SiteService) {}
+  constructor(
+    private readonly siteService: SiteService,
+    @InjectRepository(Site)
+    private siteRepository: Repository<Site>,
+  ) {}
 
   @Post()
   @SerializeOptions({ groups: ['backoffice'] })
@@ -44,7 +51,7 @@ export class SiteController {
   @ApiOperation({ summary: 'Get all sites' })
   @ApiResponse({ status: 200, description: 'Return all sites' })
   list() {
-    return this.siteService.list();
+    return this.siteRepository.find({ order: { created: 'DESC' } });
   }
 
   @Get(':id')
@@ -54,7 +61,7 @@ export class SiteController {
   @ApiResponse({ status: 200, description: 'Return the site' })
   @ApiResponse({ status: 404, description: 'Site not found' })
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.siteService.findOne(id);
+    return this.siteRepository.findOneOrFail({ where: { id } });
   }
 
   @Patch(':id')

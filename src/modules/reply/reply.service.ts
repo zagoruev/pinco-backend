@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -34,71 +30,41 @@ export class ReplyService {
       .getMany();
   }
 
-  async listReplies(
-    currentUser: RequestUser,
-    siteId?: number,
-  ): Promise<Reply[]> {
-    const replies = await this.replyRepository
-      .createQueryBuilder('reply')
-      .leftJoinAndSelect('reply.comment', 'comment')
-      .leftJoinAndSelect('reply.user', 'user')
-      .where('comment.site_id = :siteId', { siteId })
-      .orderBy('reply.created', 'DESC')
-      .getMany();
-
-    return replies.map((reply) => {
-      return {
-        ...reply,
-        formatted_message: reply.message,
-      };
-    });
-  }
-
   async create(
     createDto: CreateReplyDto,
     site: Site,
     currentUser: RequestUser,
   ): Promise<Reply> {
-    const comment = await this.commentRepository.findOne({
+    const comment = await this.commentRepository.findOneOrFail({
       where: { id: createDto.comment_id, site_id: site.id },
       relations: ['user'],
     });
 
-    if (!comment) {
-      throw new NotFoundException(
-        `Comment with ID ${createDto.comment_id} not found`,
-      );
-    }
-
-    const reply = this.replyRepository.create({
+    const newReply = this.replyRepository.create({
       comment_id: createDto.comment_id,
       user_id: currentUser.id,
       message: createDto.message,
     });
 
-    if (isResolveAdded(reply.message) && !comment.resolved) {
+    if (isResolveAdded(newReply.message) && !comment.resolved) {
       comment.resolved = true;
       await this.commentRepository.save(comment);
     }
 
-    const savedReply = await this.replyRepository.save(reply);
+    const savedReply = await this.replyRepository.save(newReply);
 
-    const fullReply = await this.replyRepository.findOne({
+    const reply = await this.replyRepository.findOneOrFail({
       where: { id: savedReply.id },
       relations: ['user', 'comment'],
     });
 
-    if (!fullReply) {
-      throw new Error('Failed to load created reply');
-    }
-
     this.eventEmitter.emit('reply.created', {
-      reply: fullReply,
+      reply,
       comment,
       site,
     });
 
-    return fullReply;
+    return reply;
   }
 
   async addResolveReply(comment: Comment, user_id: number): Promise<Reply> {
@@ -117,17 +83,9 @@ export class ReplyService {
     site: Site,
     currentUser: RequestUser,
   ): Promise<Reply> {
-    const reply = await this.replyRepository
-      .createQueryBuilder('reply')
-      .leftJoinAndSelect('reply.comment', 'comment')
-      .leftJoinAndSelect('reply.user', 'user')
-      .where('reply.id = :id', { id })
-      .andWhere('comment.site_id = :siteId', { siteId: site.id })
-      .getOne();
-
-    if (!reply) {
-      throw new NotFoundException(`Reply with ID ${id} not found`);
-    }
+    const reply = await this.replyRepository.findOneOrFail({
+      where: { id, comment: { site_id: site.id } },
+    });
 
     if (reply.user_id !== currentUser.id) {
       throw new BadRequestException('You can only edit your own replies');

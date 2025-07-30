@@ -7,6 +7,7 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
+import { UserSiteRole } from '../user/user-site.entity';
 
 describe('ReplyController', () => {
   let controller: ReplyController;
@@ -16,6 +17,7 @@ describe('ReplyController', () => {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com/',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -25,10 +27,9 @@ describe('ReplyController', () => {
   };
 
   const mockTokenPayload: TokenPayload = {
-    sub: 1,
+    id: 1,
     email: 'user@example.com',
-    sites: [1],
-    roles: ['COMMENTER'],
+    roles: [UserSiteRole.COLLABORATOR],
   };
 
   const mockReplyResponse = {
@@ -87,7 +88,7 @@ describe('ReplyController', () => {
       const result = await controller.create(
         createDto,
         mockSite,
-        mockTokenPayload,
+        mockTokenPayload, 
       );
 
       expect(service.create).toHaveBeenCalledWith(

@@ -26,14 +26,18 @@ export class Reply {
   message: string;
 
   @CreateDateColumn()
-  @Transform(({ value }: { value: Date }) =>
-    value.toISOString().slice(0, 19).replace('T', ' '),
+  @Transform(
+    ({ value }: { value: Date }) =>
+      value.toISOString().slice(0, 19).replace('T', ' '),
+    { groups: ['widget'] },
   )
   created: Date;
 
   @UpdateDateColumn()
-  @Transform(({ value }: { value: Date }) =>
-    value.toISOString().slice(0, 19).replace('T', ' '),
+  @Transform(
+    ({ value }: { value: Date }) =>
+      value.toISOString().slice(0, 19).replace('T', ' '),
+    { groups: ['widget'] },
   )
   updated: Date;
 
