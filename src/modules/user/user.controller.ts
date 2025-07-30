@@ -9,8 +9,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Query,
-  UseInterceptors,
-  ClassSerializerInterceptor,
+  SerializeOptions,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
@@ -34,7 +33,6 @@ import { DeleteInviteDto } from './dto/delete-invite.dto';
 @ApiTags('users')
 @Controller('users')
 @UseGuards(CookieAuthGuard, RolesGuard)
-@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -45,12 +43,13 @@ export class UserController {
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({ status: 200, description: 'Return current user' })
   async getCurrentUser(@CurrentUser() currentUser: RequestUser) {
-    const user = await this.userService.findOne(currentUser.sub, currentUser);
+    const user = await this.userService.findOne(currentUser.id, currentUser);
     return user;
   }
 
   @Post()
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({
@@ -73,7 +72,8 @@ export class UserController {
   }
 
   @Get('list')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all site users' })
   @ApiResponse({ status: 200, description: 'Return all site users' })
   listAll(
@@ -84,7 +84,8 @@ export class UserController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiResponse({ status: 200, description: 'Return the user' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -97,7 +98,8 @@ export class UserController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Update a user' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -115,7 +117,8 @@ export class UserController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 200, description: 'User deleted successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -129,7 +132,8 @@ export class UserController {
   }
 
   @Post('invite')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Send or resend invite to user' })
   @ApiResponse({ status: 200, description: 'Invite sent successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -143,7 +147,8 @@ export class UserController {
   }
 
   @Post('invite/delete')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Delete user invite' })
   @ApiResponse({ status: 200, description: 'Invite deleted successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -155,7 +160,8 @@ export class UserController {
   }
 
   @Post('invite/resend')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Resend invite to user' })
   @ApiResponse({ status: 200, description: 'Invite resent successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
@@ -167,7 +173,8 @@ export class UserController {
   }
 
   @Post('invite/revoke')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Revoke user invite' })
   @ApiResponse({ status: 200, description: 'Invite revoked successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })

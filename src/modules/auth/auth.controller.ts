@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { InviteLoginDto } from './dto/invite-login.dto';
@@ -19,10 +18,7 @@ import { InviteLoginDto } from './dto/invite-login.dto';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private configService: ConfigService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -35,7 +31,7 @@ export class AuthController {
   ) {
     const { token, user } = await this.authService.login(loginDto);
 
-    this.setAuthCookie(response, token);
+    this.authService.setAuthCookie(response, token);
 
     return { user: user.id };
   }
@@ -54,7 +50,7 @@ export class AuthController {
 
     const { token, site } = await this.authService.loginWithInvite(invite);
 
-    this.setAuthCookie(response, token);
+    this.authService.setAuthCookie(response, token);
 
     response.redirect(site.url);
   }
@@ -65,15 +61,5 @@ export class AuthController {
   logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('token');
     return { message: 'Logout successful' };
-  }
-
-  private setAuthCookie(response: Response, token: string) {
-    response.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-      signed: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
   }
 }

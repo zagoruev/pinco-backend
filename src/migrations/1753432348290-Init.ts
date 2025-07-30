@@ -7,9 +7,9 @@ export class Init1753432348290 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `CREATE TABLE replies (
-          id bigint NOT NULL AUTO_INCREMENT,
-          comment_id bigint NOT NULL,
-          user_id bigint NOT NULL,
+          id int NOT NULL AUTO_INCREMENT,
+          comment_id int NOT NULL,
+          user_id int NOT NULL,
           message text NOT NULL,
           created datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
           updated datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -18,24 +18,23 @@ export class Init1753432348290 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE TABLE comment_views (
-          comment_id bigint NOT NULL,
-          user_id bigint NOT NULL,
+          comment_id int NOT NULL,
+          user_id int NOT NULL,
           viewed timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (comment_id, user_id)
       ) ENGINE=InnoDB`,
     );
     await queryRunner.query(
       `CREATE TABLE comments (
-          id bigint NOT NULL AUTO_INCREMENT,
+          id int NOT NULL AUTO_INCREMENT,
           uniqid varchar(13) NOT NULL,
           message text NOT NULL,
-          user_id bigint NOT NULL,
-          site_id bigint NOT NULL,
+          user_id int NOT NULL,
+          site_id int NOT NULL,
           url varchar(2048) NOT NULL,
           reference json NULL,
           details json NULL,
           resolved tinyint NOT NULL DEFAULT 0,
-          screenshot varchar(255) NULL,
           created datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
           updated datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
           UNIQUE INDEX IDX_35652253cde554031dc7252587 (uniqid),
@@ -44,7 +43,7 @@ export class Init1753432348290 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE TABLE sites (
-          id bigint NOT NULL AUTO_INCREMENT,
+          id int NOT NULL AUTO_INCREMENT,
           name varchar(255) NOT NULL,
           license varchar(255) NOT NULL,
           domain varchar(255) NOT NULL,
@@ -58,8 +57,8 @@ export class Init1753432348290 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE TABLE user_sites (
-          user_id bigint NOT NULL,
-          site_id bigint NOT NULL,
+          user_id int NOT NULL,
+          site_id int NOT NULL,
           invite_code varchar(13) NULL,
           roles text NOT NULL DEFAULT '',
           created datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
@@ -69,7 +68,7 @@ export class Init1753432348290 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE TABLE users (
-          id bigint NOT NULL AUTO_INCREMENT,
+          id int NOT NULL AUTO_INCREMENT,
           email varchar(255) NOT NULL,
           name varchar(255) NOT NULL,
           username varchar(255) NOT NULL,

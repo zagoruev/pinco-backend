@@ -84,7 +84,7 @@ export class ReplyService {
     // Create reply
     const reply = this.replyRepository.create({
       comment_id: createDto.comment_id,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
       message: createDto.message,
     });
 
@@ -144,7 +144,7 @@ export class ReplyService {
     }
 
     // Only author can update the reply
-    if (reply.user_id !== currentUser.sub) {
+    if (reply.user_id !== currentUser.id) {
       throw new BadRequestException('You can only edit your own replies');
     }
 

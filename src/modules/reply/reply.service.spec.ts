@@ -78,7 +78,7 @@ describe('ReplyService', () => {
   };
 
   const mockTokenPayload: TokenPayload = {
-    sub: 1,
+    id: 1,
     email: 'user@example.com',
     sites: [1],
     roles: ['COMMENTER'],
@@ -166,7 +166,7 @@ describe('ReplyService', () => {
       });
       expect(replyRepository.create).toHaveBeenCalledWith({
         comment_id: createDto.comment_id,
-        user_id: mockTokenPayload.sub,
+        user_id: mockTokenPayload.id,
         message: createDto.message,
       });
       expect(replyRepository.save).toHaveBeenCalled();

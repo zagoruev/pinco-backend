@@ -17,10 +17,10 @@ export enum UserSiteRole {
 
 @Entity('user_sites')
 export class UserSite {
-  @PrimaryColumn({ type: 'bigint' })
+  @PrimaryColumn({ type: 'int' })
   user_id: number;
 
-  @PrimaryColumn({ type: 'bigint' })
+  @PrimaryColumn({ type: 'int' })
   site_id: number;
 
   @Column({ type: 'varchar', length: 13, nullable: true, unique: true })

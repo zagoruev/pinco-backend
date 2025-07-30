@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmailService } from './email.service';
 import { User } from '../user/user.entity';
 import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
+import { AppConfigService } from '../config/config.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private emailService: EmailService,
-    private configService: ConfigService,
+    private configService: AppConfigService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}

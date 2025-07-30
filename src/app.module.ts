@@ -15,22 +15,15 @@ import { CommentModule } from './modules/comment/comment.module';
 import { ReplyModule } from './modules/reply/reply.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { WidgetModule } from './modules/widget/widget.module';
-import {
-  appConfig,
-  databaseConfig,
-  emailConfig,
-  screenshotConfig,
-} from './config';
+import { AppConfigModule } from './modules/config/config.module';
+import { AppConfigService } from './modules/config/config.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [appConfig, databaseConfig, emailConfig, screenshotConfig],
-    }),
+    AppConfigModule,
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
+      imports: [AppConfigModule],
+      useFactory: (configService: AppConfigService) => ({
         type: 'mysql',
         host: configService.get('database.host'),
         port: configService.get('database.port'),
@@ -41,18 +34,18 @@ import {
         migrations: ['dist/migrations/*{.ts,.js}'],
         synchronize: false,
       }),
-      inject: [ConfigService],
+      inject: [AppConfigService],
     }),
     EventEmitterModule.forRoot(),
     ServeStaticModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => [
+      imports: [AppConfigModule],
+      useFactory: (configService: AppConfigService) => [
         {
           rootPath: path.join(
             __dirname,
             '..',
             '..',
-            configService.get('screenshot.baseDir', './screenshots'),
+            configService.get('screenshot.baseDir'),
           ),
           serveRoot: '/screenshots',
           serveStaticOptions: {
@@ -60,7 +53,7 @@ import {
           },
         },
       ],
-      inject: [ConfigService],
+      inject: [AppConfigService],
     }),
     HealthModule,
     AuthModule,

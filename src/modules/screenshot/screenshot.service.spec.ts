@@ -1,23 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { LocalScreenshotStrategy } from './strategies/local-screenshot.strategy';
+import { AppConfigService } from '../config/config.service';
 
 jest.mock('fs/promises');
 
 describe('LocalScreenshotStrategy', () => {
   let strategy: LocalScreenshotStrategy;
-  let configService: ConfigService;
+  let configService: AppConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LocalScreenshotStrategy,
         {
-          provide: ConfigService,
+          provide: AppConfigService,
           useValue: {
-            get: jest.fn((key: string, defaultValue?: any) => {
+            get: jest.fn((key: string, defaultValue?: string) => {
               const config: Record<string, string> = {
                 'screenshot.baseDir': './test-screenshots',
                 'screenshot.baseUrl': 'http://test.com/screenshots',
@@ -30,7 +30,7 @@ describe('LocalScreenshotStrategy', () => {
     }).compile();
 
     strategy = module.get<LocalScreenshotStrategy>(LocalScreenshotStrategy);
-    configService = module.get<ConfigService>(ConfigService);
+    configService = module.get<AppConfigService>(AppConfigService);
   });
 
   afterEach(() => {

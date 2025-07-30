@@ -70,7 +70,7 @@ describe('CommentService', () => {
   };
 
   const mockTokenPayload: TokenPayload = {
-    sub: 1,
+    id: 1,
     email: 'test@example.com',
     roles: [UserRole.COMMENTER],
     sites: [1],
@@ -276,7 +276,7 @@ describe('CommentService', () => {
     });
 
     it('should throw BadRequestException if user is not the author', async () => {
-      const differentUserPayload = { ...mockTokenPayload, sub: 2 };
+      const differentUserPayload = { ...mockTokenPayload, id: 2 };
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(mockComment);
 
       await expect(
@@ -320,7 +320,7 @@ describe('CommentService', () => {
 
       expect(result).toEqual({
         viewed: null,
-        user_id: mockTokenPayload.sub,
+        user_id: mockTokenPayload.id,
       });
     });
   });
@@ -334,7 +334,7 @@ describe('CommentService', () => {
       expect(commentViewRepository.save).toHaveBeenCalledWith([
         {
           comment_id: mockComment.id,
-          user_id: mockTokenPayload.sub,
+          user_id: mockTokenPayload.id,
           viewed: expect.any(Date) as Date,
         },
       ]);

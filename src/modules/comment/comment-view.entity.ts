@@ -4,10 +4,10 @@ import { User } from '../user/user.entity';
 
 @Entity('comment_views')
 export class CommentView {
-  @PrimaryColumn({ type: 'bigint' })
+  @PrimaryColumn({ type: 'int' })
   comment_id: number;
 
-  @PrimaryColumn({ type: 'bigint' })
+  @PrimaryColumn({ type: 'int' })
   user_id: number;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

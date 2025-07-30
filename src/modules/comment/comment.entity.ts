@@ -12,6 +12,7 @@ import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
 import { Reply } from '../reply/reply.entity';
 import { CommentView } from './comment-view.entity';
+import { Exclude, Expose } from 'class-transformer';
 
 export interface CommentDetails {
   vh: number;
@@ -23,7 +24,7 @@ export interface CommentDetails {
 
 @Entity('comments')
 export class Comment {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  @PrimaryGeneratedColumn('increment', { type: 'int' })
   id: number;
 
   @Column({ length: 13, unique: true })
@@ -32,10 +33,11 @@ export class Comment {
   @Column('text')
   message: string;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'int' })
   user_id: number;
 
-  @Column({ type: 'bigint' })
+  @Exclude()
+  @Column({ type: 'int' })
   site_id: number;
 
   @Column({ length: 2048 })
@@ -50,19 +52,27 @@ export class Comment {
   @Column({ default: false })
   resolved: boolean;
 
-  @Column({ length: 255, nullable: true, type: 'varchar' })
-  screenshot: string | null;
-
   @CreateDateColumn()
   created: Date;
 
   @UpdateDateColumn()
   updated: Date;
 
+  screenshot: string | null;
+
+  @Expose()
+  get viewed(): Date | null {
+    return (
+      this.views?.find((view) => view.user_id === this.user_id)?.viewed || null
+    );
+  }
+
+  @Exclude()
   @ManyToOne(() => User, (user) => user.comments)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  @Exclude()
   @ManyToOne(() => Site, (site) => site.comments)
   @JoinColumn({ name: 'site_id' })
   site: Site;
@@ -70,6 +80,7 @@ export class Comment {
   @OneToMany(() => Reply, (reply) => reply.comment)
   replies: Reply[];
 
+  @Exclude()
   @OneToMany(() => CommentView, (view) => view.comment)
   views: CommentView[];
 }

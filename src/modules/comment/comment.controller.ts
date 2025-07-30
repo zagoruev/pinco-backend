@@ -9,6 +9,7 @@ import {
   UploadedFile,
   ParseIntPipe,
   Query,
+  SerializeOptions,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -47,7 +48,8 @@ export class CommentController {
 
   @Get('list')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all comments for the current user' })
   @ApiResponse({ status: 200, description: 'Return all comments' })
   list(
@@ -78,7 +80,7 @@ export class CommentController {
 
   @Post(':id')
   @UseGuards(OriginGuard)
-  @UseInterceptors(FileInterceptor('screenshot'))
+  @UseInterceptors(FileInterceptor(''))
   @ApiOperation({ summary: 'Update a comment' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateCommentDto })
@@ -87,14 +89,9 @@ export class CommentController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCommentDto: UpdateCommentDto,
-    @UploadedFile() screenshot: Express.Multer.File,
     @CurrentSite() site: Site,
     @CurrentUser() currentUser: RequestUser,
   ) {
-    if (screenshot) {
-      updateCommentDto.screenshot = screenshot;
-    }
-    updateCommentDto.id = id;
     return this.commentService.update(id, updateCommentDto, site, currentUser);
   }
 

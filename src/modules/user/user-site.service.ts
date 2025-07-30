@@ -8,10 +8,10 @@ import { UserSite, UserSiteRole } from './user-site.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { User } from './user.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Site } from '../site/site.entity';
+import { AppConfigService } from '../config/config.service';
 
 const generateUniqid = customAlphabet(
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
@@ -34,7 +34,7 @@ export class UserSiteService {
     @InjectRepository(Site)
     private siteRepository: Repository<Site>,
     private jwtService: JwtService,
-    private configService: ConfigService,
+    private configService: AppConfigService,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -87,7 +87,7 @@ export class UserSiteService {
 
     return this.jwtService.sign(
       { user_id, site_id, invite_code },
-      { secret: this.configService.get('app.jwtSecret') },
+      { secret: this.configService.get('app.authSecret') },
     );
   }
 
@@ -96,7 +96,7 @@ export class UserSiteService {
   ): Promise<{ userSite: UserSite; user: User }> {
     const { user_id, site_id, invite_code } =
       this.jwtService.verify<InviteTokenPayload>(inviteToken, {
-        secret: this.configService.get('app.jwtSecret'),
+        secret: this.configService.get('app.authSecret'),
       });
 
     const userSite = await this.userSiteRepository.findOne({

@@ -1,16 +1,17 @@
-import { NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
-import { VersioningType } from '@nestjs/common';
+import { VersioningType, ClassSerializerInterceptor } from '@nestjs/common';
+import { AppConfigService } from './modules/config/config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const configService = app.get(AppConfigService);
 
-  const apiPrefix = configService.get<string>('app.apiPrefix');
-  const port = configService.get<number>('app.port') ?? 3000;
+  const url = configService.get('app.url');
+  const apiPrefix = configService.get('app.apiPrefix');
+  const port = configService.get('app.port');
 
   if (apiPrefix) {
     app.setGlobalPrefix(apiPrefix);
@@ -21,7 +22,9 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  app.use(cookieParser(configService.get<string>('app.jwtSecret')));
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  app.use(cookieParser(configService.get('app.authSecret')));
 
   app.enableCors({
     origin: true,
@@ -41,9 +44,7 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(
-    `Application is running on: http://localhost:${port}/${apiPrefix}`,
-  );
+  console.log(`Application is running on: ${url}/${apiPrefix}`);
 }
 
 void bootstrap();

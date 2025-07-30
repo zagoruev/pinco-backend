@@ -1,27 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { USER_COLORS } from '../user/user.entity';
 import { RequestUser } from 'src/types/express';
-
+import { AppConfigService } from '../config/config.service';
 interface PincoConfig {
   apiRoot: string;
   colors: string[];
   features: string[];
-  userId?: string;
+  userId?: number;
 }
 
 @Injectable()
 export class WidgetService {
-  constructor() {}
+  constructor(private readonly configService: AppConfigService) {}
 
   generateWidgetScript(key: string, user: RequestUser): string {
     const pincoConfig: PincoConfig = {
-      apiRoot: 'http://localhost:3001/',
+      apiRoot: this.configService.get('app.url'),
       colors: USER_COLORS,
       features: ['screenshots', 'details'],
     };
 
     if (user) {
-      pincoConfig.userId = user.sub.toString();
+      pincoConfig.userId = Number(user.id);
     }
 
     return `var Pinco = ${JSON.stringify(pincoConfig, null, 4)};

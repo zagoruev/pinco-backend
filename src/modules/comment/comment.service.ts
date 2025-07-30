@@ -10,10 +10,8 @@ import { customAlphabet } from 'nanoid';
 import { Comment } from './comment.entity';
 import { CommentView } from './comment-view.entity';
 import { Site } from '../site/site.entity';
-import { Reply } from '../reply/reply.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentResponse } from './dto/comment-response.dto';
 import { ScreenshotService } from '../screenshot/screenshot.service';
 import { RequestUser } from '../../types/express';
 import { ReplyService } from '../reply/reply.service';
@@ -30,56 +28,31 @@ export class CommentService {
     private commentRepository: Repository<Comment>,
     @InjectRepository(CommentView)
     private commentViewRepository: Repository<CommentView>,
-    @InjectRepository(Reply)
-    private replyRepository: Repository<Reply>,
     private replyService: ReplyService,
     private screenshotService: ScreenshotService,
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async findAll(
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<CommentResponse[]> {
-    const comments = await this.commentRepository
+  async findAll(site: Site, currentUser: RequestUser): Promise<Comment[]> {
+    return await this.commentRepository
       .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.user', 'user')
+      .leftJoin('comment.user', 'user')
       .leftJoinAndSelect('comment.replies', 'reply')
       .leftJoinAndSelect('reply.user', 'replyUser')
       .leftJoinAndSelect('comment.views', 'view', 'view.user_id = :userId', {
-        userId: currentUser.sub,
+        userId: currentUser.id,
       })
       .where('comment.site_id = :siteId', { siteId: site.id })
       .orderBy('comment.created', 'DESC')
       .addOrderBy('reply.created', 'ASC')
       .getMany();
-
-    // Format response according to frontend contract
-    return comments.map((comment) => {
-      // Get the viewed timestamp for current user
-      const viewRecord = comment.views?.find(
-        (v) => v.user_id === currentUser.sub,
-      );
-
-      return {
-        ...comment,
-        viewed: viewRecord?.viewed || null,
-        screenshot: comment.screenshot
-          ? this.screenshotService.getUrl(comment.screenshot)
-          : undefined,
-        replies: comment.replies.map((reply) => ({
-          ...reply,
-          formatted_message: reply.message, // Will be handled by notification module later
-        })),
-      };
-    });
   }
 
   async listComments(
     currentUser: RequestUser,
     siteId?: number,
-  ): Promise<CommentResponse[]> {
-    const comments = await this.commentRepository
+  ): Promise<Comment[]> {
+    return await this.commentRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.user', 'user')
       .leftJoinAndSelect('comment.replies', 'reply')
@@ -88,63 +61,39 @@ export class CommentService {
       .orderBy('comment.created', 'DESC')
       .addOrderBy('reply.created', 'ASC')
       .getMany();
-
-    return comments.map((comment) => {
-      return {
-        ...comment,
-        viewed: null,
-        screenshot: comment.screenshot
-          ? this.screenshotService.getUrl(comment.screenshot)
-          : undefined,
-        replies: comment.replies.map((reply) => ({
-          ...reply,
-          formatted_message: reply.message,
-        })),
-      };
-    });
   }
 
   async create(
     createDto: CreateCommentDto,
     site: Site,
     currentUser: RequestUser,
-  ): Promise<CommentResponse> {
+  ): Promise<Comment> {
     const uniqid = generateUniqid();
 
-    // Handle screenshot
-    let screenshotFilename: string | null = null;
-    if (createDto.screenshot) {
-      screenshotFilename = `${uniqid}.jpg`;
-      await this.screenshotService.save(
-        createDto.screenshot,
-        screenshotFilename,
-      );
-    }
-
-    // Create comment
     const comment = this.commentRepository.create({
       uniqid,
       message: createDto.message,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
       site_id: site.id,
       url: createDto.url,
       details: createDto.details || null,
       reference: createDto.reference || null,
-      screenshot: screenshotFilename,
       resolved: false,
     });
 
+    if (createDto.screenshot) {
+      await this.screenshotService.save(createDto.screenshot, comment);
+    }
+
     const savedComment = await this.commentRepository.save(comment);
 
-    // Create view record
     const viewed = new Date();
     await this.commentViewRepository.save({
       comment_id: savedComment.id,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
       viewed,
     });
 
-    // Load relations for response
     const fullComment = await this.commentRepository.findOne({
       where: { id: savedComment.id },
       relations: ['user', 'replies', 'replies.user'],
@@ -154,19 +103,15 @@ export class CommentService {
       throw new Error('Failed to load created comment');
     }
 
-    // Emit event for notifications
     this.eventEmitter.emit('comment.created', {
       comment: fullComment,
       site,
     });
 
-    // Format response
     return {
       ...fullComment,
       viewed,
-      screenshot: fullComment.screenshot
-        ? this.screenshotService.getUrl(fullComment.screenshot)
-        : undefined,
+      screenshot: this.screenshotService.getUrl(fullComment),
       replies: [],
     };
   }
@@ -176,7 +121,7 @@ export class CommentService {
     updateDto: UpdateCommentDto,
     site: Site,
     currentUser: RequestUser,
-  ): Promise<CommentResponse> {
+  ): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
       relations: ['user', 'replies', 'replies.user', 'views'],
@@ -186,27 +131,10 @@ export class CommentService {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
-    // Only author can update the comment
-    if (comment.user_id !== currentUser.sub) {
+    if (comment.user_id !== currentUser.id) {
       throw new BadRequestException('You can only edit your own comments');
     }
 
-    // Handle screenshot update
-    if (updateDto.screenshot) {
-      // Delete old screenshot if exists
-      if (comment.screenshot) {
-        await this.screenshotService.delete(comment.screenshot);
-      }
-
-      const screenshotFilename = `${comment.uniqid}.jpg`;
-      await this.screenshotService.save(
-        updateDto.screenshot,
-        screenshotFilename,
-      );
-      comment.screenshot = screenshotFilename;
-    }
-
-    // Update fields
     if (updateDto.message !== undefined) comment.message = updateDto.message;
     if (updateDto.details !== undefined) comment.details = updateDto.details;
     if (updateDto.reference !== undefined)
@@ -215,22 +143,19 @@ export class CommentService {
     if (updateDto.resolved !== undefined) comment.resolved = updateDto.resolved;
 
     const viewRecord = comment.views.find(
-      (view) => view.user_id === currentUser.sub,
+      (view) => view.user_id === currentUser.id,
     );
 
     const savedComment = await this.commentRepository.save(comment);
 
     if (comment.resolved && updateDto.resolved) {
-      await this.replyService.addResolveReply(comment, currentUser.sub);
+      await this.replyService.addResolveReply(comment, currentUser.id);
     }
 
-    // Format response
     return {
       ...savedComment,
       viewed: viewRecord?.viewed || null,
-      screenshot: savedComment.screenshot
-        ? this.screenshotService.getUrl(savedComment.screenshot)
-        : undefined,
+      screenshot: this.screenshotService.getUrl(savedComment),
     };
   }
 
@@ -249,16 +174,16 @@ export class CommentService {
     }
 
     const isAlreadyViewed = comment.views.find(
-      (view) => view.user_id === currentUser.sub,
+      (view) => view.user_id === currentUser.id,
     );
 
     if (isAlreadyViewed) {
-      return { viewed: isAlreadyViewed.viewed, user_id: currentUser.sub };
+      return { viewed: isAlreadyViewed.viewed, user_id: currentUser.id };
     }
 
     const viewRecord = await this.commentViewRepository.save({
       comment_id: id,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
       viewed: new Date(),
     });
 
@@ -283,25 +208,23 @@ export class CommentService {
 
     await this.commentViewRepository.delete({
       comment_id: id,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
     });
 
     return {
       viewed: null,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
     };
   }
 
   async markAllAsViewed(site: Site, currentUser: RequestUser): Promise<void> {
-    // Get all comments for the site
     const comments = await this.commentRepository.find({
       where: { site_id: site.id },
     });
 
-    // Create view records for all comments
     const viewRecords = comments.map((comment) => ({
       comment_id: comment.id,
-      user_id: currentUser.sub,
+      user_id: currentUser.id,
       viewed: new Date(),
     }));
 

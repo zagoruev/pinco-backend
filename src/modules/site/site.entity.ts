@@ -11,7 +11,7 @@ import { Comment } from '../comment/comment.entity';
 
 @Entity('sites')
 export class Site {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  @PrimaryGeneratedColumn('increment', { type: 'int' })
   id: number;
 
   @Column({ length: 255 })

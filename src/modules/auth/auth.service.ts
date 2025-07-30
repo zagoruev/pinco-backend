@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
@@ -7,6 +8,7 @@ import { TokenService } from './token.service';
 import { LoginDto } from './dto/login.dto';
 import { UserSiteService } from '../user/user-site.service';
 import { Site } from '../site/site.entity';
+import { AppConfigService } from '../config/config.service';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private tokenService: TokenService,
     private userSiteService: UserSiteService,
+    private configService: AppConfigService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -67,5 +70,17 @@ export class AuthService {
     const token = this.tokenService.signToken(user);
 
     return { token, user, site: userSite.site };
+  }
+
+  setAuthCookie(response: Response, token: string) {
+    const maxAge = this.configService.get('app.authTokenExpiresIn');
+
+    response.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      signed: true,
+      sameSite: 'none',
+      maxAge,
+    });
   }
 }

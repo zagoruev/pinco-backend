@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { UserSite } from './user-site.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
@@ -32,7 +32,7 @@ export const USER_COLORS = [
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  @PrimaryGeneratedColumn('increment', { type: 'int' })
   id: number;
 
   @Column({ length: 255, unique: true })
@@ -55,21 +55,25 @@ export class User {
   @Column({ length: 255, unique: true })
   username: string;
 
+  @Exclude()
   @Column({ length: 255 })
   password: string;
 
   @Column({ default: true })
   active: boolean;
 
+  @Expose({ groups: ['backoffice'] })
   @Column({
     type: 'simple-array',
     default: '',
   })
   roles: UserRole[];
 
+  @Expose({ groups: ['backoffice'] })
   @CreateDateColumn()
   created: Date;
 
+  @Expose({ groups: ['backoffice'] })
   @UpdateDateColumn()
   updated: Date;
 

@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ScreenshotStrategy } from './strategies/screenshot-strategy.interface';
+import { Comment } from '../comment/comment.entity';
 
 export const SCREENSHOT_STRATEGY = 'SCREENSHOT_STRATEGY';
 
@@ -10,15 +11,15 @@ export class ScreenshotService {
     private strategy: ScreenshotStrategy,
   ) {}
 
-  async save(file: Express.Multer.File, filename: string): Promise<string> {
-    return this.strategy.save(file, filename);
+  async save(file: Express.Multer.File, comment: Comment): Promise<string> {
+    return this.strategy.save(file, comment);
   }
 
-  getUrl(filename: string): string {
-    return this.strategy.getUrl(filename);
+  getUrl(comment: Comment): string {
+    return this.strategy.getUrl(comment);
   }
 
-  async delete(filename: string): Promise<void> {
-    return this.strategy.delete(filename);
+  async delete(comment: Comment): Promise<void> {
+    return this.strategy.delete(comment);
   }
 }

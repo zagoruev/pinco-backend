@@ -41,7 +41,7 @@ export class CookieAuthGuard implements CanActivate {
 
     try {
       const user = this.tokenService.verifyToken(token!);
-      const sites = await this.siteService.getUserSites(user.sub);
+      const sites = await this.siteService.getUserSites(user.id);
 
       request.user = {
         ...user,

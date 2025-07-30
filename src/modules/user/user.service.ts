@@ -52,7 +52,7 @@ export class UserService {
       createUserDto.siteIds
     ) {
       await this.validateSiteOwnerAccess(
-        currentUser.sub,
+        currentUser.id,
         createUserDto.siteIds,
       );
     }
@@ -81,45 +81,15 @@ export class UserService {
       await this.userSiteRepository.save(userSites);
     }
 
-    /*
-    // Generate invite token if requested
-    if (createUserDto.invite) {
-      const secretToken = await this.userSiteService.generateInviteToken(
-        savedUser.id,
-        savedUser.id,
-      );
-
-      // Emit event for email notification
-      this.eventEmitter.emit('user.invited', {
-        user: savedUser,
-        secretToken,
-      });
-    }
-    */
     return savedUser;
   }
 
-  async findAll(currentUser: RequestUser, siteId?: number): Promise<User[]> {
-    const query = this.userRepository
+  async findAll(currentUser: RequestUser, siteId: number): Promise<User[]> {
+    return this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.sites', 'userSite')
-      .leftJoinAndSelect('userSite.site', 'site');
-
-    // If SITE_OWNER, only show users from their sites
-    if (
-      currentUser.roles.includes(UserSiteRole.ADMIN) &&
-      !currentUser.roles.includes(UserRole.ADMIN)
-    ) {
-      const ownerSites = await this.getUserSites(currentUser.sub);
-      query.where('userSite.site_id IN (:...siteIds)', { siteIds: ownerSites });
-    }
-
-    // Filter by specific site if provided
-    if (siteId) {
-      query.andWhere('userSite.site_id = :siteId', { siteId });
-    }
-
-    return query.getMany();
+      .leftJoin('user.sites', 'userSite')
+      .andWhere('userSite.site_id = :siteId', { siteId })
+      .getMany();
   }
 
   async listUsers(currentUser: RequestUser, siteId?: number): Promise<User[]> {
@@ -151,7 +121,7 @@ export class UserService {
       !currentUser.roles.includes(UserRole.ADMIN)
     ) {
       const hasAccess = await this.checkSiteOwnerUserAccess(
-        currentUser.sub,
+        currentUser.id,
         id,
       );
       if (!hasAccess) {
@@ -205,7 +175,7 @@ export class UserService {
         !currentUser.roles.includes(UserRole.ADMIN)
       ) {
         await this.validateSiteOwnerAccess(
-          currentUser.sub,
+          currentUser.id,
           updateUserDto.siteIds,
         );
       }
@@ -233,7 +203,7 @@ export class UserService {
     const user = await this.findOne(id, currentUser);
 
     // Prevent self-deletion
-    if (id === currentUser.sub) {
+    if (id === currentUser.id) {
       throw new BadRequestException('You cannot delete your own account');
     }
 

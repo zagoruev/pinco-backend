@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+import { AppConfigService } from '../config/config.service';
 
 export interface EmailOptions {
   to: string;
@@ -14,11 +14,11 @@ export interface EmailOptions {
 export class EmailService {
   private transporter: Transporter;
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: AppConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get('email.host', 'localhost'),
-      port: this.configService.get('email.port', 587),
-      secure: this.configService.get('email.secure', false),
+      host: this.configService.get('email.host'),
+      port: this.configService.get('email.port'),
+      secure: this.configService.get('email.secure'),
       auth: {
         user: this.configService.get('email.user'),
         pass: this.configService.get('email.pass'),
@@ -27,10 +27,7 @@ export class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
-    const from = this.configService.get<string>(
-      'email.from',
-      'noreply@pinco.com',
-    );
+    const from = this.configService.get('email.from');
 
     await (this.transporter.sendMail({
       from,

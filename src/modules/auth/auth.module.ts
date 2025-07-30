@@ -1,7 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
@@ -13,6 +12,8 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
 import { SiteModule } from '../site/site.module';
 import { UserModule } from '../user/user.module';
+import { AppConfigService } from '../config/config.service';
+import { AppConfigModule } from '../config/config.module';
 
 @Global()
 @Module({
@@ -21,14 +22,14 @@ import { UserModule } from '../user/user.module';
     SiteModule,
     UserModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('app.jwtSecret'),
+      imports: [AppConfigModule],
+      useFactory: (configService: AppConfigService) => ({
+        secret: configService.get('app.authSecret'),
         signOptions: {
-          expiresIn: configService.get('app.jwtExpiresIn'),
+          expiresIn: configService.get('app.authTokenExpiresIn'),
         },
       }),
-      inject: [ConfigService],
+      inject: [AppConfigService],
     }),
   ],
   controllers: [AuthController],
