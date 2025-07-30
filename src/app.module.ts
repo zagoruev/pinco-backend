@@ -36,24 +36,28 @@ import { AppConfigService } from './modules/config/config.service';
       inject: [AppConfigService],
     }),
     EventEmitterModule.forRoot(),
-    ServeStaticModule.forRootAsync({
-      imports: [AppConfigModule],
-      useFactory: (configService: AppConfigService) => [
-        {
-          rootPath: path.join(
-            __dirname,
-            '..',
-            '..',
-            configService.get('screenshot.baseDir'),
-          ),
-          serveRoot: '/screenshots',
-          serveStaticOptions: {
-            index: false,
-          },
-        },
-      ],
-      inject: [AppConfigService],
-    }),
+    ...(process.env.SCREENSHOT_SERVE_LOCAL === 'true'
+      ? [
+          ServeStaticModule.forRootAsync({
+            imports: [AppConfigModule],
+            useFactory: (configService: AppConfigService) => [
+              {
+                rootPath: path.join(
+                  __dirname,
+                  '..',
+                  '..',
+                  configService.get('screenshot.baseDir'),
+                ),
+                serveRoot: '/screenshots',
+                serveStaticOptions: {
+                  index: false,
+                },
+              },
+            ],
+            inject: [AppConfigService],
+          }),
+        ]
+      : []),
     HealthModule,
     AuthModule,
     SiteModule,
