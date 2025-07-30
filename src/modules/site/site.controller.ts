@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseIntPipe,
+  SerializeOptions,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SiteService } from './site.service';
@@ -25,6 +26,7 @@ export class SiteController {
   constructor(private readonly siteService: SiteService) {}
 
   @Post()
+  @SerializeOptions({ groups: ['backoffice'] })
   @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Create a new site' })
   @ApiResponse({ status: 201, description: 'Site created successfully' })
@@ -37,7 +39,8 @@ export class SiteController {
   }
 
   @Get('list')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all sites' })
   @ApiResponse({ status: 200, description: 'Return all sites' })
   list() {
@@ -45,7 +48,8 @@ export class SiteController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get a site by id' })
   @ApiResponse({ status: 200, description: 'Return the site' })
   @ApiResponse({ status: 404, description: 'Site not found' })
@@ -54,7 +58,8 @@ export class SiteController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Update a site' })
   @ApiResponse({ status: 200, description: 'Site updated successfully' })
   @ApiResponse({ status: 404, description: 'Site not found' })
@@ -70,6 +75,7 @@ export class SiteController {
   }
 
   @Delete(':id')
+  @SerializeOptions({ groups: ['backoffice'] })
   @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Delete a site' })
   @ApiResponse({ status: 200, description: 'Site deleted successfully' })
@@ -79,7 +85,8 @@ export class SiteController {
   }
 
   @Get(':id/users')
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all users for a site' })
   @ApiResponse({ status: 200, description: 'Return all users for the site' })
   @ApiResponse({ status: 404, description: 'Site not found' })

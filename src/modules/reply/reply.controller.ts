@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   ParseIntPipe,
   Query,
+  SerializeOptions,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -46,7 +47,8 @@ export class ReplyController {
 
   @Get('list')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ROOT, UserRole.ADMIN)
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
   @ApiOperation({ summary: 'Get all replies for current site' })
   @ApiResponse({ status: 200, description: 'Returns all replies' })
   list(

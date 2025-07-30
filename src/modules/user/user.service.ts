@@ -51,10 +51,7 @@ export class UserService {
       currentUser.roles.includes(UserSiteRole.ADMIN) &&
       createUserDto.siteIds
     ) {
-      await this.validateSiteOwnerAccess(
-        currentUser.id,
-        createUserDto.siteIds,
-      );
+      await this.validateSiteOwnerAccess(currentUser.id, createUserDto.siteIds);
     }
 
     // Hash password
@@ -120,10 +117,7 @@ export class UserService {
       currentUser.roles.includes(UserSiteRole.ADMIN) &&
       !currentUser.roles.includes(UserRole.ADMIN)
     ) {
-      const hasAccess = await this.checkSiteOwnerUserAccess(
-        currentUser.id,
-        id,
-      );
+      const hasAccess = await this.checkSiteOwnerUserAccess(currentUser.id, id);
       if (!hasAccess) {
         throw new ForbiddenException('You do not have access to this user');
       }
