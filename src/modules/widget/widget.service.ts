@@ -13,12 +13,49 @@ interface PincoConfig {
 export class WidgetService {
   constructor(private readonly configService: AppConfigService) {}
 
+  private createDomElement(
+    tagName: string,
+    attributes: Record<string, string>,
+  ): string {
+    const attributeStrings = Object.entries(attributes)
+      .map(([key, value]) => `${key} = '${value}';`)
+      .join('\n      ');
+
+    return `
+      var element = document.createElement('${tagName}');
+      ${attributeStrings}
+      document.head.appendChild(element);`;
+  }
+
+  private generateWidgetScriptElements(isDev: boolean): string {
+    const urlConfigKey = isDev ? 'app.widgetDevUrl' : 'app.widgetUrl';
+    const url = this.configService.get(urlConfigKey);
+
+    const scriptElement = this.createDomElement('script', {
+      'element.src': `${url}/js/ui.js`,
+      'element.type': 'text/javascript',
+    });
+
+    if (isDev) {
+      return scriptElement;
+    }
+
+    const styleElement = this.createDomElement('link', {
+      'element.href': `${url}/css/ui.css`,
+      'element.rel': 'stylesheet',
+    });
+
+    return scriptElement + styleElement;
+  }
+
   generateWidgetScript(key: string, user: RequestUser): string {
     const pincoConfig: PincoConfig = {
       apiRoot: this.configService.get('app.url'),
       colors: USER_COLORS,
       features: ['screenshots', 'details'],
     };
+
+    const isDev = Boolean(this.configService.get('app.widgetIsDev'));
 
     if (user) {
       pincoConfig.userId = Number(user.id);
@@ -30,10 +67,7 @@ export class WidgetService {
           root.id = 'pinco-ui';
           root.dir = 'ltr';
           document.body.appendChild(root);
-          var script = document.createElement('script');
-          script.src = 'http://localhost:3000/static/js/ui.js';
-          script.type = 'text/javascript';
-          document.head.appendChild(script);
+          ${this.generateWidgetScriptElements(isDev)}
       })();`;
   }
 }
