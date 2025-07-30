@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request } from 'express';
 import { Site } from '../../modules/site/site.entity';
+import { UserSiteRole } from 'src/modules/user/user-site.entity';
 
 @Injectable()
 export class OriginGuard implements CanActivate {
@@ -37,7 +38,9 @@ export class OriginGuard implements CanActivate {
     }
 
     const canAccessSite = user?.sites.some(
-      (userSite) => userSite.site_id === site.id,
+      (userSite) =>
+        userSite.site_id === site.id &&
+        userSite.roles.includes(UserSiteRole.COLLABORATOR),
     );
 
     if (!canAccessSite) {

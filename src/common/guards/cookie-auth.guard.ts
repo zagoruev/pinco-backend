@@ -48,8 +48,7 @@ export class CookieAuthGuard implements CanActivate {
         sites,
       };
       return true;
-    } catch (error) {
-      console.error(error);
+    } catch {
       if (isOptional) {
         return true;
       }

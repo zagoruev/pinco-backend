@@ -139,4 +139,12 @@ export class UserSiteService {
       { invite_code: null },
     );
   }
+
+  async updateUserSiteRoles(
+    user_id: number,
+    site_id: number,
+    roles: UserSiteRole[],
+  ): Promise<void> {
+    await this.userSiteRepository.update({ user_id, site_id }, { roles });
+  }
 }

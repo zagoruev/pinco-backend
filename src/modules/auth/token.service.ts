@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../user/user.entity';
 import { AppConfigService } from '../config/config.service';
@@ -33,6 +33,10 @@ export class TokenService {
     const payload = this.jwtService.verify<TokenPayload>(token, {
       secret: this.configService.get('app.authSecret'),
     });
+
+    if (!payload.id) {
+      throw new UnauthorizedException('Invalid authentication token');
+    }
 
     return {
       id: Number(payload.id),

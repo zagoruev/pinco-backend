@@ -44,7 +44,7 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  console.log(`Application is running on: ${url}/${apiPrefix}`);
+  console.log(`Application is running on: ${url}${apiPrefix}`);
 }
 
 void bootstrap();

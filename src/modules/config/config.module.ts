@@ -13,6 +13,7 @@ import {
   imports: [
     ConfigModule.forRoot({
       load: [appConfig, databaseConfig, emailConfig, screenshotConfig],
+      expandVariables: true,
     }),
   ],
   providers: [AppConfigService],

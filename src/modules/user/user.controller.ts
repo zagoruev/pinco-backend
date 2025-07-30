@@ -29,6 +29,7 @@ import { InviteUserDto } from './dto/invite-user.dto';
 import { RevokeInviteDto } from './dto/revoke-invite.dto';
 import { ResendInviteDto } from './dto/resend-invite.dto';
 import { DeleteInviteDto } from './dto/delete-invite.dto';
+import { UpdateUserSiteRolesDto } from './dto/update-user-site-roles.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -143,6 +144,20 @@ export class UserController {
       inviteUserDto.site_id,
       inviteUserDto.roles,
       inviteUserDto.invite,
+    );
+  }
+
+  @Patch('invite/update')
+  @SerializeOptions({ groups: ['backoffice'] })
+  @Roles(UserRole.ROOT)
+  @ApiOperation({ summary: 'Update user invite' })
+  @ApiResponse({ status: 200, description: 'Invite updated successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  updateInvite(@Body() updateInviteDto: UpdateUserSiteRolesDto) {
+    return this.userSiteService.updateUserSiteRoles(
+      updateInviteDto.user_id,
+      updateInviteDto.site_id,
+      updateInviteDto.roles,
     );
   }
 
