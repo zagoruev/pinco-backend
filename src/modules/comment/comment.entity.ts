@@ -14,6 +14,8 @@ import { Reply } from '../reply/reply.entity';
 import { CommentView } from './comment-view.entity';
 import { Exclude, Expose } from 'class-transformer';
 
+export const COMMENT_PREFIX = 'c-';
+
 export interface CommentDetails {
   vh: number;
   vw: number;

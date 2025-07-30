@@ -34,7 +34,7 @@ export class CommentService {
   ) {}
 
   async findAll(site: Site, currentUser: RequestUser): Promise<Comment[]> {
-    return await this.commentRepository
+    const comments = await this.commentRepository
       .createQueryBuilder('comment')
       .leftJoin('comment.user', 'user')
       .leftJoinAndSelect('comment.replies', 'reply')
@@ -46,6 +46,12 @@ export class CommentService {
       .orderBy('comment.created', 'DESC')
       .addOrderBy('reply.created', 'ASC')
       .getMany();
+
+    return comments.map((comment) => ({
+      ...comment,
+      viewed: comment.viewed,
+      screenshot: this.screenshotService.getUrl(comment),
+    }));
   }
 
   async listComments(

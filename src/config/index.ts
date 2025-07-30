@@ -13,8 +13,12 @@ const validationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production').required(),
   PORT: Joi.number().default(3000),
   API_PREFIX: Joi.string().default('api'),
-  APP_URL: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
-  WIDGET_URL: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
+  APP_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .required(),
+  WIDGET_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .required(),
   AUTH_SECRET: Joi.string().required(),
   AUTH_TOKEN_EXPIRES_IN: Joi.string().required(),
   SMTP_HOST: Joi.string().required(),
@@ -23,7 +27,9 @@ const validationSchema = Joi.object({
   SMTP_PASS: Joi.string().required(),
   EMAIL_FROM: Joi.string().required(),
   SCREENSHOT_BASE_DIR: Joi.string().required(),
-  SCREENSHOT_BASE_URL: Joi.string().uri({ scheme: ['http', 'https'] }).required(),
+  SCREENSHOT_BASE_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .required(),
 });
 
 export type Config = {

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
 import { AppConfigService } from '../config/config.service';
+import { EmailTemplate, EmailTemplateData } from './templates';
 
 export interface EmailOptions {
   to: string;
@@ -36,6 +37,19 @@ export class EmailService {
       html: options.html,
       text: options.text || this.stripHtml(options.html),
     }) as Promise<void>);
+  }
+
+  async sendWithTemplate<T extends EmailTemplateData>(
+    to: string,
+    template: EmailTemplate<T>,
+    data: T,
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: template.subject(data),
+      html: template.html(data),
+      text: template.text(data),
+    });
   }
 
   private stripHtml(html: string): string {

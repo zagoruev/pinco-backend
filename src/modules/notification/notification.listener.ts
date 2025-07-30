@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from './notification.service';
-import { Comment } from '../comment/comment.entity';
+import { Comment, COMMENT_PREFIX } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
 import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
@@ -31,17 +31,16 @@ export class NotificationListener {
   async handleCommentCreated(event: CommentCreatedEvent): Promise<void> {
     const { comment, site } = event;
 
-    // Extract mentions from comment message
     const mentions = this.notificationService.extractMentions(comment.message);
+    const url = `${site.url}${comment.url}#c-${comment.uniqid}`;
 
-    // Send notification for each mention
     for (const username of mentions) {
       await this.notificationService.sendMentionNotification(
         username,
         comment.user,
         site,
         comment.message,
-        comment.url,
+        url,
         'comment',
       );
     }
@@ -51,32 +50,16 @@ export class NotificationListener {
   async handleReplyCreated(event: ReplyCreatedEvent): Promise<void> {
     const { reply, comment, site } = event;
 
-    // Extract mentions from reply message
     const mentions = this.notificationService.extractMentions(reply.message);
+    const url = `${site.url}${comment.url}#${COMMENT_PREFIX}${comment.uniqid}`;
 
-    // Send notification for each mention
     for (const username of mentions) {
       await this.notificationService.sendMentionNotification(
         username,
         reply.user,
         site,
         reply.message,
-        comment.url,
-        'reply',
-      );
-    }
-
-    // Also notify the comment author if they weren't mentioned
-    if (
-      comment.user_id !== reply.user_id &&
-      !mentions.includes(comment.user.username)
-    ) {
-      await this.notificationService.sendMentionNotification(
-        comment.user.username,
-        reply.user,
-        site,
-        reply.message,
-        comment.url,
+        url,
         'reply',
       );
     }
