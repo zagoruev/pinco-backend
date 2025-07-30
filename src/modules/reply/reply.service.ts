@@ -92,7 +92,6 @@ export class ReplyService {
       throw new Error('Failed to load created reply');
     }
 
-    // Emit event for notifications
     this.eventEmitter.emit('reply.created', {
       reply: fullReply,
       comment,
@@ -130,12 +129,10 @@ export class ReplyService {
       throw new NotFoundException(`Reply with ID ${id} not found`);
     }
 
-    // Only author can update the reply
     if (reply.user_id !== currentUser.id) {
       throw new BadRequestException('You can only edit your own replies');
     }
 
-    // Update message if provided
     if (updateDto.message !== undefined) {
       reply.message = updateDto.message;
     }
