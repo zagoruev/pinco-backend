@@ -47,11 +47,10 @@ export class CommentService {
       .addOrderBy('reply.created', 'ASC')
       .getMany();
 
-    return comments.map((comment) => ({
-      ...comment,
-      viewed: comment.viewed,
-      screenshot: this.screenshotService.getUrl(comment),
-    }));
+    return comments.map((comment) => {
+      comment.screenshot = this.screenshotService.getUrl(comment);
+      return comment;
+    });
   }
 
   async listComments(

@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Comment } from '../comment/comment.entity';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 
 @Entity('replies')
 export class Reply {
@@ -26,9 +26,15 @@ export class Reply {
   message: string;
 
   @CreateDateColumn()
+  @Transform(({ value }: { value: Date }) =>
+    value.toISOString().slice(0, 19).replace('T', ' '),
+  )
   created: Date;
 
   @UpdateDateColumn()
+  @Transform(({ value }: { value: Date }) =>
+    value.toISOString().slice(0, 19).replace('T', ' '),
+  )
   updated: Date;
 
   @Exclude()

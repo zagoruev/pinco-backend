@@ -12,7 +12,7 @@ import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
 import { Reply } from '../reply/reply.entity';
 import { CommentView } from './comment-view.entity';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 
 export const COMMENT_PREFIX = 'c-';
 
@@ -55,9 +55,15 @@ export class Comment {
   resolved: boolean;
 
   @CreateDateColumn()
+  @Transform(({ value }: { value: Date }) =>
+    value.toISOString().slice(0, 19).replace('T', ' '),
+  )
   created: Date;
 
   @UpdateDateColumn()
+  @Transform(({ value }: { value: Date }) =>
+    value.toISOString().slice(0, 19).replace('T', ' '),
+  )
   updated: Date;
 
   screenshot: string | null;
