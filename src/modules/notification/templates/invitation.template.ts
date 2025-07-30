@@ -43,7 +43,7 @@ export class InvitationTemplate extends EmailTemplate<InvitationTemplateData> {
     `;
 
     const footer = `
-      <p>Need help? Contact us at <a href="mailto:support@pinco.com">support@pinco.com</a></p>
+      <p>Need help? Contact us at <a href="mailto:help@pinco.works">help@pinco.works</a></p>
     `;
 
     return this.baseLayout(content, footer);
