@@ -11,7 +11,6 @@ import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
-import { ReplyResponse } from './dto/reply-response.dto';
 import { RequestUser } from '../../types/express';
 import { isResolveAdded } from './reply.utils';
 
@@ -25,29 +24,20 @@ export class ReplyService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async findAll(site: Site): Promise<ReplyResponse[]> {
-    const replies = await this.replyRepository
+  async findAll(site: Site): Promise<Reply[]> {
+    return await this.replyRepository
       .createQueryBuilder('reply')
       .leftJoinAndSelect('reply.comment', 'comment')
       .leftJoinAndSelect('reply.user', 'user')
       .where('comment.site_id = :siteId', { siteId: site.id })
       .orderBy('reply.created', 'DESC')
       .getMany();
-
-    return replies.map((reply) => ({
-      id: reply.id,
-      comment_id: reply.comment_id,
-      message: reply.message,
-      created: reply.created,
-      updated: reply.updated,
-      user_id: reply.user_id,
-    }));
   }
 
   async listReplies(
     currentUser: RequestUser,
     siteId?: number,
-  ): Promise<ReplyResponse[]> {
+  ): Promise<Reply[]> {
     const replies = await this.replyRepository
       .createQueryBuilder('reply')
       .leftJoinAndSelect('reply.comment', 'comment')
@@ -68,8 +58,7 @@ export class ReplyService {
     createDto: CreateReplyDto,
     site: Site,
     currentUser: RequestUser,
-  ): Promise<ReplyResponse> {
-    // Validate comment exists and belongs to the site
+  ): Promise<Reply> {
     const comment = await this.commentRepository.findOne({
       where: { id: createDto.comment_id, site_id: site.id },
       relations: ['user'],
@@ -81,7 +70,6 @@ export class ReplyService {
       );
     }
 
-    // Create reply
     const reply = this.replyRepository.create({
       comment_id: createDto.comment_id,
       user_id: currentUser.id,
@@ -95,7 +83,6 @@ export class ReplyService {
 
     const savedReply = await this.replyRepository.save(reply);
 
-    // Load relations for response
     const fullReply = await this.replyRepository.findOne({
       where: { id: savedReply.id },
       relations: ['user', 'comment'],
@@ -130,7 +117,7 @@ export class ReplyService {
     updateDto: UpdateReplyDto,
     site: Site,
     currentUser: RequestUser,
-  ): Promise<ReplyResponse> {
+  ): Promise<Reply> {
     const reply = await this.replyRepository
       .createQueryBuilder('reply')
       .leftJoinAndSelect('reply.comment', 'comment')
