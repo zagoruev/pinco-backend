@@ -1,6 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+
+import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AppModule } from '../src/app.module';
 
 describe('Security Tests (e2e)', () => {
@@ -49,10 +51,7 @@ describe('Security Tests (e2e)', () => {
         url: '/test',
       };
 
-      const response = await request(app.getHttpServer())
-        .post('/api/v1/comments')
-        .send(maliciousComment)
-        .expect(401);
+      const response = await request(app.getHttpServer()).post('/api/v1/comments').send(maliciousComment).expect(401);
 
       expect(response.text).not.toContain('<script>');
     });
@@ -86,10 +85,7 @@ describe('Security Tests (e2e)', () => {
     });
 
     it('should allow requests from authorized origins', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/comments')
-        .set('Origin', 'https://test.com')
-        .expect(401); // Would need auth, but origin is allowed
+      return request(app.getHttpServer()).get('/api/v1/comments').set('Origin', 'https://test.com').expect(401); // Would need auth, but origin is allowed
     });
   });
 

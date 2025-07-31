@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateReplyDto {
   @ApiProperty({ example: 1, required: true })

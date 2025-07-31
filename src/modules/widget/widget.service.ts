@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { USER_COLORS } from '../user/user.entity';
+
 import { RequestUser } from '../../types/express';
 import { AppConfigService } from '../config/config.service';
+import { USER_COLORS } from '../user/user.entity';
 
 interface PincoConfig {
   apiRoot: string;
@@ -14,10 +15,7 @@ interface PincoConfig {
 export class WidgetService {
   constructor(private readonly configService: AppConfigService) {}
 
-  private createDomElement(
-    tagName: string,
-    attributes: Record<string, string>,
-  ): string {
+  private createDomElement(tagName: string, attributes: Record<string, string>): string {
     const attributeStrings = Object.entries(attributes)
       .map(([key, value]) => `${key} = '${value}';`)
       .join('\n        ');

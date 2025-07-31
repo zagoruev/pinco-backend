@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WidgetController } from './widget.controller';
-import { WidgetService } from './widget.service';
-import { Site } from '../site/site.entity';
-import { User } from '../user/user.entity';
-import { UserSite, UserSiteRole } from '../user/user-site.entity';
-import { RequestUser } from '../../types/express';
+
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
+import { UserSite, UserSiteRole } from '../user/user-site.entity';
+import { User } from '../user/user.entity';
+import { WidgetController } from './widget.controller';
+import { WidgetService } from './widget.service';
 
 describe('WidgetController', () => {
   let controller: WidgetController;
@@ -111,19 +112,13 @@ describe('WidgetController', () => {
       const key = 'test-license-key';
       const result = controller.getWidgetScript(key, mockRequestUser);
 
-      expect(service.generateWidgetScript).toHaveBeenCalledWith(
-        key,
-        mockRequestUser,
-      );
+      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, mockRequestUser);
       expect(result).toEqual('/* Widget script */');
     });
 
     it('should return widget script for unauthenticated user', () => {
       const key = 'test-license-key';
-      const result = controller.getWidgetScript(
-        key,
-        undefined as unknown as RequestUser,
-      );
+      const result = controller.getWidgetScript(key, undefined as unknown as RequestUser);
 
       expect(service.generateWidgetScript).toHaveBeenCalledWith(key, undefined);
       expect(result).toEqual('/* Widget script */');

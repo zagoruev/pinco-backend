@@ -1,21 +1,23 @@
+import * as path from 'path';
+
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ValidationPipe } from '@nestjs/common';
+import { APP_PIPE } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { APP_PIPE } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import * as path from 'path';
-import { HealthModule } from './modules/health/health.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AuthModule } from './modules/auth/auth.module';
-import { SiteModule } from './modules/site/site.module';
-import { UserModule } from './modules/user/user.module';
-import { ScreenshotModule } from './modules/screenshot/screenshot.module';
 import { CommentModule } from './modules/comment/comment.module';
-import { ReplyModule } from './modules/reply/reply.module';
-import { NotificationModule } from './modules/notification/notification.module';
-import { WidgetModule } from './modules/widget/widget.module';
 import { AppConfigModule } from './modules/config/config.module';
 import { AppConfigService } from './modules/config/config.service';
+import { HealthModule } from './modules/health/health.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { ReplyModule } from './modules/reply/reply.module';
+import { ScreenshotModule } from './modules/screenshot/screenshot.module';
+import { SiteModule } from './modules/site/site.module';
+import { UserModule } from './modules/user/user.module';
+import { WidgetModule } from './modules/widget/widget.module';
 
 @Module({
   imports: [
@@ -42,12 +44,7 @@ import { AppConfigService } from './modules/config/config.service';
             imports: [AppConfigModule],
             useFactory: (configService: AppConfigService) => [
               {
-                rootPath: path.join(
-                  __dirname,
-                  '..',
-                  '..',
-                  configService.get('screenshot.baseDir'),
-                ),
+                rootPath: path.join(__dirname, '..', '..', configService.get('screenshot.baseDir')),
                 serveRoot: '/screenshots',
                 serveStaticOptions: {
                   index: false,

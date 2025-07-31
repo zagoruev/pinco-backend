@@ -1,12 +1,14 @@
+import { Repository } from 'typeorm';
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EmailService } from './email.service';
-import { User } from '../user/user.entity';
+
 import { Comment } from '../comment/comment.entity';
-import { Site } from '../site/site.entity';
 import { AppConfigService } from '../config/config.service';
-import { MentionTemplate, InvitationTemplate } from './templates';
+import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
+import { EmailService } from './email.service';
+import { InvitationTemplate, MentionTemplate } from './templates';
 
 @Injectable()
 export class NotificationService {
@@ -36,35 +38,23 @@ export class NotificationService {
       return;
     }
 
-    await this.emailService.sendWithTemplate(
-      mentionedUser.email,
-      this.mentionTemplate,
-      {
-        authorName: author.name,
-        mentionType: type,
-        siteName: site.name,
-        content,
-        url,
-      },
-    );
+    await this.emailService.sendWithTemplate(mentionedUser.email, this.mentionTemplate, {
+      authorName: author.name,
+      mentionType: type,
+      siteName: site.name,
+      content,
+      url,
+    });
   }
 
-  async sendInviteNotification(
-    user: User,
-    site: Site,
-    inviteCode: string,
-  ): Promise<void> {
+  async sendInviteNotification(user: User, site: Site, inviteCode: string): Promise<void> {
     const appUrl = `${this.configService.get('app.url')}/${this.configService.get('app.apiPrefix')}`;
 
-    await this.emailService.sendWithTemplate(
-      user.email,
-      this.invitationTemplate,
-      {
-        siteName: site.name,
-        inviteCode,
-        appUrl,
-      },
-    );
+    await this.emailService.sendWithTemplate(user.email, this.invitationTemplate, {
+      siteName: site.name,
+      inviteCode,
+      appUrl,
+    });
   }
 
   extractMentions(text: string): string[] {

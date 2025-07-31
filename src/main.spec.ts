@@ -70,7 +70,7 @@ describe('Main Bootstrap', () => {
 
     // Setup mock reflector
     mockReflector = { get: jest.fn() };
-    
+
     // Setup mock config service
     mockConfigService = {
       get: jest.fn((key: string) => {
@@ -141,9 +141,7 @@ describe('Main Bootstrap', () => {
     expect(mockApp.listen).toHaveBeenCalledWith(3000);
 
     // Verify console log
-    expect(console.log).toHaveBeenCalledWith(
-      'Application is running on: http://localhost:3000/api',
-    );
+    expect(console.log).toHaveBeenCalledWith('Application is running on: http://localhost:3000/api');
   });
 
   it('should not set global prefix when apiPrefix is empty', async () => {
@@ -161,9 +159,7 @@ describe('Main Bootstrap', () => {
     await bootstrap();
 
     expect(mockApp.setGlobalPrefix).not.toHaveBeenCalled();
-    expect(console.log).toHaveBeenCalledWith(
-      'Application is running on: http://localhost:3000/',
-    );
+    expect(console.log).toHaveBeenCalledWith('Application is running on: http://localhost:3000/');
   });
 
   describe('Swagger configuration', () => {
@@ -186,15 +182,8 @@ describe('Main Bootstrap', () => {
 
       const DocumentBuilder = require('@nestjs/swagger').DocumentBuilder;
       expect(DocumentBuilder).toHaveBeenCalled();
-      expect(SwaggerModule.createDocument).toHaveBeenCalledWith(
-        mockApp,
-        expect.any(Object),
-      );
-      expect(SwaggerModule.setup).toHaveBeenCalledWith(
-        'docs',
-        mockApp,
-        mockDocument,
-      );
+      expect(SwaggerModule.createDocument).toHaveBeenCalledWith(mockApp, expect.any(Object));
+      expect(SwaggerModule.setup).toHaveBeenCalledWith('docs', mockApp, mockDocument);
     });
 
     it('should not setup Swagger in production environment', async () => {
@@ -233,9 +222,7 @@ describe('Main Bootstrap', () => {
     expect(mockApp.setGlobalPrefix).toHaveBeenCalledWith('v1');
     expect(mockApp.listen).toHaveBeenCalledWith(8080);
     expect(cookieParser).toHaveBeenCalledWith('prod-secret');
-    expect(console.log).toHaveBeenCalledWith(
-      'Application is running on: https://api.example.com/v1',
-    );
+    expect(console.log).toHaveBeenCalledWith('Application is running on: https://api.example.com/v1');
   });
 
   it('should configure all middleware and interceptors', async () => {

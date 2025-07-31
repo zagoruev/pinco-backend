@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Comment } from './comment.entity';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+
 import { User } from '../user/user.entity';
+import { Comment } from './comment.entity';
 
 @Entity('comment_views')
 export class CommentView {

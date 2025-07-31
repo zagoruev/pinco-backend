@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WidgetService } from './widget.service';
-import { AppConfigService } from '../config/config.service';
+
 import { RequestUser } from '../../types/express';
+import { AppConfigService } from '../config/config.service';
 import { USER_COLORS } from '../user/user.entity';
+import { WidgetService } from './widget.service';
 
 describe('WidgetService', () => {
   let service: WidgetService;
@@ -69,20 +70,13 @@ describe('WidgetService', () => {
       expect(result).toContain('"features": [');
       expect(result).toContain('"screenshots"');
       expect(result).toContain('"details"');
-      expect(result).toContain(
-        "element.src = 'https://widget.example.com/js/ui.js';",
-      );
-      expect(result).toContain(
-        "element.href = 'https://widget.example.com/css/ui.css';",
-      );
+      expect(result).toContain("element.src = 'https://widget.example.com/js/ui.js';");
+      expect(result).toContain("element.href = 'https://widget.example.com/css/ui.css';");
       expect(result).toContain("root.id = 'pinco-ui';");
     });
 
     it('should generate widget script for unauthenticated user', () => {
-      const result = service.generateWidgetScript(
-        'test-key',
-        null as unknown as RequestUser,
-      );
+      const result = service.generateWidgetScript('test-key', null as unknown as RequestUser);
 
       expect(result).toContain('var Pinco = {');
       expect(result).toContain('"apiRoot": "https://api.example.com/"');
@@ -105,9 +99,7 @@ describe('WidgetService', () => {
 
       const result = service.generateWidgetScript('test-key', mockRequestUser);
 
-      expect(result).toContain(
-        "element.src = 'http://localhost:5173/js/ui.js';",
-      );
+      expect(result).toContain("element.src = 'http://localhost:5173/js/ui.js';");
       expect(result).not.toContain('element.href');
       expect(result).not.toContain('css');
     });
@@ -146,9 +138,7 @@ describe('WidgetService', () => {
       const result = service.generateWidgetScript('test-key', mockRequestUser);
 
       // String "false" is truthy, so should use dev URL
-      expect(result).toContain(
-        "element.src = 'http://localhost:5173/js/ui.js';",
-      );
+      expect(result).toContain("element.src = 'http://localhost:5173/js/ui.js';");
       expect(result).not.toContain('element.href');
       expect(result).not.toContain('css');
     });

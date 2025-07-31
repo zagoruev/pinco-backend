@@ -1,12 +1,14 @@
 import { Controller, Get, Header, Query, UseGuards } from '@nestjs/common';
-import { WidgetService } from './widget.service';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { OptionalAuth } from '../../common/decorators/optional-auth.decorator';
+
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { RequestUser } from '../../types/express';
+import { OptionalAuth } from '../../common/decorators/optional-auth.decorator';
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
+import { RequestUser } from '../../types/express';
+import { WidgetService } from './widget.service';
+
 @Controller({
   version: VERSION_NEUTRAL,
 })

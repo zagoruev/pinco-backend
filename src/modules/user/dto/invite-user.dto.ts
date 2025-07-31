@@ -1,4 +1,5 @@
 import { IsArray, IsBoolean, IsEnum, IsNumber } from 'class-validator';
+
 import { UserSiteRole } from '../user-site.entity';
 
 export class InviteUserDto {

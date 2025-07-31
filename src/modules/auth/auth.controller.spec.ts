@@ -1,11 +1,13 @@
+import { Response } from 'express';
+
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { Site } from '../site/site.entity';
+import { User, UserRole } from '../user/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { User, UserRole } from '../user/user.entity';
-import { Response } from 'express';
-import { LoginDto } from './dto/login.dto';
 import { InviteLoginDto } from './dto/invite-login.dto';
-import { Site } from '../site/site.entity';
+import { LoginDto } from './dto/login.dto';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -93,10 +95,7 @@ describe('AuthController', () => {
       const result = await controller.login(loginDto, response);
 
       expect(authService.login).toHaveBeenCalledWith(loginDto);
-      expect(authService.setAuthCookie).toHaveBeenCalledWith(
-        response,
-        'test-token',
-      );
+      expect(authService.setAuthCookie).toHaveBeenCalledWith(response, 'test-token');
       expect(result).toEqual({ user: mockUser.id });
     });
 
@@ -108,9 +107,7 @@ describe('AuthController', () => {
 
       mockAuthService.login.mockRejectedValue(new Error('Invalid credentials'));
 
-      await expect(controller.login(loginDto, response)).rejects.toThrow(
-        'Invalid credentials',
-      );
+      await expect(controller.login(loginDto, response)).rejects.toThrow('Invalid credentials');
     });
   });
 
@@ -127,13 +124,8 @@ describe('AuthController', () => {
 
       await controller.loginWithInvite(inviteDto, response);
 
-      expect(authService.loginWithInvite).toHaveBeenCalledWith(
-        'valid-invite-token',
-      );
-      expect(authService.setAuthCookie).toHaveBeenCalledWith(
-        response,
-        'test-token',
-      );
+      expect(authService.loginWithInvite).toHaveBeenCalledWith('valid-invite-token');
+      expect(authService.setAuthCookie).toHaveBeenCalledWith(response, 'test-token');
       expect(response.redirect).toHaveBeenCalledWith('https://test.com');
     });
 
@@ -142,13 +134,9 @@ describe('AuthController', () => {
         invite: 'invalid-invite',
       };
 
-      mockAuthService.loginWithInvite.mockRejectedValue(
-        new Error('Invalid invite token'),
-      );
+      mockAuthService.loginWithInvite.mockRejectedValue(new Error('Invalid invite token'));
 
-      await expect(
-        controller.loginWithInvite(inviteDto, response),
-      ).rejects.toThrow('Invalid invite token');
+      await expect(controller.loginWithInvite(inviteDto, response)).rejects.toThrow('Invalid invite token');
     });
   });
 

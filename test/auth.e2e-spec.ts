@@ -1,8 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
+import * as request from 'supertest';
+
+import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AuthController } from '../src/modules/auth/auth.controller';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { Site } from '../src/modules/site/site.entity';
@@ -51,9 +53,7 @@ describe('AuthController (e2e)', () => {
         {
           provide: AuthService,
           useValue: {
-            login: jest
-              .fn()
-              .mockResolvedValue({ token: 'test-token', user: mockUser }),
+            login: jest.fn().mockResolvedValue({ token: 'test-token', user: mockUser }),
             loginWithInvite: jest.fn().mockResolvedValue({
               token: 'test-token',
               site: { url: 'https://test.com' },

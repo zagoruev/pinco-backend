@@ -1,15 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ReplyController } from './reply.controller';
-import { ReplyService } from './reply.service';
-import { Site } from '../site/site.entity';
-import { RequestUser } from '../../types/express';
-import { CreateReplyDto } from './dto/create-reply.dto';
-import { UpdateReplyDto } from './dto/update-reply.dto';
-import { Reply } from './reply.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
 import { UserSiteRole } from '../user/user-site.entity';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { CreateReplyDto } from './dto/create-reply.dto';
+import { UpdateReplyDto } from './dto/update-reply.dto';
+import { ReplyController } from './reply.controller';
+import { Reply } from './reply.entity';
+import { ReplyService } from './reply.service';
 
 describe('ReplyController', () => {
   let controller: ReplyController;
@@ -96,17 +97,9 @@ describe('ReplyController', () => {
         message: 'New reply',
       };
 
-      const result = await controller.create(
-        createDto,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.create(createDto, mockSite, mockRequestUser);
 
-      expect(service.create).toHaveBeenCalledWith(
-        createDto,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.create).toHaveBeenCalledWith(createDto, mockSite, mockRequestUser);
       expect(result).toEqual(mockReplyResponse);
     });
   });
@@ -118,19 +111,9 @@ describe('ReplyController', () => {
         message: 'Updated reply',
       };
 
-      const result = await controller.update(
-        '1',
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.update('1', updateDto, mockSite, mockRequestUser);
 
-      expect(service.update).toHaveBeenCalledWith(
-        1,
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.update).toHaveBeenCalledWith(1, updateDto, mockSite, mockRequestUser);
       expect(result).toEqual(mockReplyResponse);
     });
   });

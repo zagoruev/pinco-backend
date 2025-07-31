@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RolesGuard } from './roles.guard';
-import { UserRole } from '../../modules/user/user.entity';
-import { UserSiteRole } from '../../modules/user/user-site.entity';
-import { RequestUser } from '../../types/express';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { Site } from '../../modules/site/site.entity';
+import { UserSiteRole } from '../../modules/user/user-site.entity';
+import { UserRole } from '../../modules/user/user.entity';
 import { User } from '../../modules/user/user.entity';
+import { RequestUser } from '../../types/express';
+import { RolesGuard } from './roles.guard';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;
@@ -29,10 +30,7 @@ describe('RolesGuard', () => {
     getAllAndOverride: jest.fn(),
   };
 
-  const createMockExecutionContext = (
-    user?: RequestUser,
-    site?: Site,
-  ): ExecutionContext => {
+  const createMockExecutionContext = (user?: RequestUser, site?: Site): ExecutionContext => {
     const mockRequest = {
       user,
       site,
@@ -77,10 +75,7 @@ describe('RolesGuard', () => {
 
       const result = guard.canActivate(context);
 
-      expect(reflector.getAllAndOverride).toHaveBeenCalledWith('roles', [
-        context.getHandler(),
-        context.getClass(),
-      ]);
+      expect(reflector.getAllAndOverride).toHaveBeenCalledWith('roles', [context.getHandler(), context.getClass()]);
       expect(result).toBe(true);
     });
 
@@ -178,10 +173,7 @@ describe('RolesGuard', () => {
       };
       const context = createMockExecutionContext(adminUser);
 
-      mockReflector.getAllAndOverride.mockReturnValue([
-        UserRole.ADMIN,
-        UserRole.ROOT,
-      ]);
+      mockReflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN, UserRole.ROOT]);
 
       const result = guard.canActivate(context);
 

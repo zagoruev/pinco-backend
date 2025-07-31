@@ -1,21 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
-import { UserSiteService } from './user-site.service';
-import { User, UserRole } from './user.entity';
-import { Site } from '../site/site.entity';
-import { UserSite, UserSiteRole } from './user-site.entity';
+
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
+import { OriginGuard } from '../../common/guards/origin.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { DeleteInviteDto } from './dto/delete-invite.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { ResendInviteDto } from './dto/resend-invite.dto';
 import { RevokeInviteDto } from './dto/revoke-invite.dto';
-import { DeleteInviteDto } from './dto/delete-invite.dto';
 import { UpdateUserSiteRolesDto } from './dto/update-user-site-roles.dto';
-import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { OriginGuard } from '../../common/guards/origin.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserSite, UserSiteRole } from './user-site.entity';
+import { UserSiteService } from './user-site.service';
+import { UserController } from './user.controller';
+import { User, UserRole } from './user.entity';
+import { UserService } from './user.service';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -127,10 +128,7 @@ describe('UserController', () => {
     it('should return current user', async () => {
       const result = await controller.getCurrentUser(mockRequestUser);
 
-      expect(userService.findOne).toHaveBeenCalledWith(
-        mockRequestUser.id,
-        mockRequestUser,
-      );
+      expect(userService.findOne).toHaveBeenCalledWith(mockRequestUser.id, mockRequestUser);
       expect(result).toEqual(mockUser);
     });
   });
@@ -139,10 +137,7 @@ describe('UserController', () => {
     it('should return all site users', async () => {
       const result = await controller.findAll(mockSite, mockRequestUser);
 
-      expect(userService.findAll).toHaveBeenCalledWith(
-        mockRequestUser,
-        mockSite.id,
-      );
+      expect(userService.findAll).toHaveBeenCalledWith(mockRequestUser, mockSite.id);
       expect(result).toEqual([mockUser]);
     });
   });
@@ -158,10 +153,7 @@ describe('UserController', () => {
     it('should list all users without siteId', async () => {
       const result = await controller.listAll(mockRequestUser);
 
-      expect(userService.listUsers).toHaveBeenCalledWith(
-        mockRequestUser,
-        undefined,
-      );
+      expect(userService.listUsers).toHaveBeenCalledWith(mockRequestUser, undefined);
       expect(result).toEqual([mockUser]);
     });
   });
@@ -200,11 +192,7 @@ describe('UserController', () => {
 
       const result = await controller.update(1, updateDto, mockRequestUser);
 
-      expect(userService.update).toHaveBeenCalledWith(
-        1,
-        updateDto,
-        mockRequestUser,
-      );
+      expect(userService.update).toHaveBeenCalledWith(1, updateDto, mockRequestUser);
       expect(result).toEqual(mockUser);
     });
   });
@@ -267,10 +255,7 @@ describe('UserController', () => {
 
       const result = await controller.deleteInvite(deleteDto);
 
-      expect(userSiteService.removeUserFromSite).toHaveBeenCalledWith(
-        deleteDto.user_id,
-        deleteDto.site_id,
-      );
+      expect(userSiteService.removeUserFromSite).toHaveBeenCalledWith(deleteDto.user_id, deleteDto.site_id);
       expect(result).toBeUndefined();
     });
   });
@@ -284,10 +269,7 @@ describe('UserController', () => {
 
       const result = await controller.resendInvite(resendDto);
 
-      expect(userSiteService.inviteUser).toHaveBeenCalledWith(
-        resendDto.user_id,
-        resendDto.site_id,
-      );
+      expect(userSiteService.inviteUser).toHaveBeenCalledWith(resendDto.user_id, resendDto.site_id);
       expect(result).toEqual(mockUserSite);
     });
   });
@@ -301,10 +283,7 @@ describe('UserController', () => {
 
       const result = await controller.revokeInvite(revokeDto);
 
-      expect(userSiteService.revokeInvite).toHaveBeenCalledWith(
-        revokeDto.user_id,
-        revokeDto.site_id,
-      );
+      expect(userSiteService.revokeInvite).toHaveBeenCalledWith(revokeDto.user_id, revokeDto.site_id);
       expect(result).toBeUndefined();
     });
   });

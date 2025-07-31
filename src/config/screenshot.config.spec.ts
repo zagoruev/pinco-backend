@@ -86,8 +86,7 @@ describe('Screenshot Config', () => {
   });
 
   it('should handle different base URLs', () => {
-    process.env.SCREENSHOT_BASE_URL =
-      'https://s3.amazonaws.com/bucket/screenshots';
+    process.env.SCREENSHOT_BASE_URL = 'https://s3.amazonaws.com/bucket/screenshots';
 
     const config = screenshotConfig();
 

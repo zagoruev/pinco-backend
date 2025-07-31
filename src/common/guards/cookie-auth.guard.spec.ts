@@ -1,12 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { CookieAuthGuard, OPTIONAL_AUTH_KEY } from './cookie-auth.guard';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { TokenService } from '../../modules/auth/token.service';
+import { Site } from '../../modules/site/site.entity';
 import { SiteService } from '../../modules/site/site.service';
 import { UserSite } from '../../modules/user/user-site.entity';
 import { User, UserRole } from '../../modules/user/user.entity';
-import { Site } from '../../modules/site/site.entity';
+import { CookieAuthGuard, OPTIONAL_AUTH_KEY } from './cookie-auth.guard';
 
 describe('CookieAuthGuard', () => {
   let guard: CookieAuthGuard;
@@ -69,9 +70,7 @@ describe('CookieAuthGuard', () => {
     getAllAndOverride: jest.fn(),
   };
 
-  const createMockExecutionContext = (
-    signedCookies: Record<string, string> = {},
-  ): ExecutionContext => {
+  const createMockExecutionContext = (signedCookies: Record<string, string> = {}): ExecutionContext => {
     const mockRequest = {
       signedCookies,
     };
@@ -137,10 +136,10 @@ describe('CookieAuthGuard', () => {
 
       const result = await guard.canActivate(context);
 
-      expect(reflector.getAllAndOverride).toHaveBeenCalledWith(
-        OPTIONAL_AUTH_KEY,
-        [context.getHandler(), context.getClass()],
-      );
+      expect(reflector.getAllAndOverride).toHaveBeenCalledWith(OPTIONAL_AUTH_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]);
       expect(tokenService.verifyToken).toHaveBeenCalledWith(token);
       expect(siteService.getUserSites).toHaveBeenCalledWith(tokenPayload.id);
       expect(request.user).toEqual({
@@ -153,12 +152,8 @@ describe('CookieAuthGuard', () => {
     it('should throw UnauthorizedException when no token', async () => {
       const context = createMockExecutionContext();
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        'No authentication token found',
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      await expect(guard.canActivate(context)).rejects.toThrow('No authentication token found');
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
@@ -168,12 +163,8 @@ describe('CookieAuthGuard', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        'Invalid authentication token',
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(UnauthorizedException);
+      await expect(guard.canActivate(context)).rejects.toThrow('Invalid authentication token');
     });
 
     it('should handle user with no sites', async () => {

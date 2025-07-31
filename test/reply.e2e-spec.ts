@@ -1,20 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
 import * as cookieSignature from 'cookie-signature';
-import { ConfigModule } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import * as request from 'supertest';
 import { Repository } from 'typeorm';
+
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { ReplyModule } from '../src/modules/reply/reply.module';
-import { Reply } from '../src/modules/reply/reply.entity';
-import { Comment } from '../src/modules/comment/comment.entity';
-import { Site } from '../src/modules/site/site.entity';
-import { User, UserRole } from '../src/modules/user/user.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
-import { TokenService } from '../src/modules/auth/token.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { AuthModule } from '../src/modules/auth/auth.module';
+import { TokenService } from '../src/modules/auth/token.service';
+import { Comment } from '../src/modules/comment/comment.entity';
+import { Reply } from '../src/modules/reply/reply.entity';
+import { ReplyModule } from '../src/modules/reply/reply.module';
+import { Site } from '../src/modules/site/site.entity';
+import { UserSite } from '../src/modules/user/user-site.entity';
+import { User, UserRole } from '../src/modules/user/user.entity';
 
 describe('ReplyController (e2e)', () => {
   let app: INestApplication;
@@ -137,15 +139,9 @@ describe('ReplyController (e2e)', () => {
       .useValue({})
       .compile();
 
-    replyRepository = moduleFixture.get<Repository<Reply>>(
-      getRepositoryToken(Reply),
-    );
-    commentRepository = moduleFixture.get<Repository<Comment>>(
-      getRepositoryToken(Comment),
-    );
-    siteRepository = moduleFixture.get<Repository<Site>>(
-      getRepositoryToken(Site),
-    );
+    replyRepository = moduleFixture.get<Repository<Reply>>(getRepositoryToken(Reply));
+    commentRepository = moduleFixture.get<Repository<Comment>>(getRepositoryToken(Comment));
+    siteRepository = moduleFixture.get<Repository<Site>>(getRepositoryToken(Site));
     tokenService = moduleFixture.get<TokenService>(TokenService);
 
     app = moduleFixture.createNestApplication();
@@ -191,10 +187,7 @@ describe('ReplyController (e2e)', () => {
     });
 
     it('should return 401 without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/replies')
-        .set('Origin', 'https://test.com')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/v1/replies').set('Origin', 'https://test.com').expect(401);
     });
 
     it('should return 403 without origin', () => {
@@ -215,9 +208,7 @@ describe('ReplyController (e2e)', () => {
         message: 'New reply',
       };
 
-      jest
-        .spyOn(commentRepository, 'findOne')
-        .mockResolvedValueOnce(mockComment);
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValueOnce(mockComment);
       jest.spyOn(replyRepository, 'save').mockResolvedValueOnce(mockReply);
       jest.spyOn(replyRepository, 'findOne').mockResolvedValueOnce(mockReply);
 

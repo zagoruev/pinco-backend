@@ -1,11 +1,13 @@
+import { Repository } from 'typeorm';
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+
 import { AppConfigService } from '../config/config.service';
-import { NotificationService } from './notification.service';
-import { EmailService } from './email.service';
-import { User, UserRole } from '../user/user.entity';
 import { Site } from '../site/site.entity';
+import { User, UserRole } from '../user/user.entity';
+import { EmailService } from './email.service';
+import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
@@ -115,17 +117,13 @@ describe('NotificationService', () => {
         where: { username: 'testuser', active: true },
       });
 
-      expect(emailService.sendWithTemplate).toHaveBeenCalledWith(
-        'user@example.com',
-        expect.any(Object),
-        {
-          authorName: 'Author User',
-          mentionType: 'comment',
-          siteName: 'Test Site',
-          content: 'Hello @testuser, check this out!',
-          url: 'https://test.com/comments/1',
-        },
-      );
+      expect(emailService.sendWithTemplate).toHaveBeenCalledWith('user@example.com', expect.any(Object), {
+        authorName: 'Author User',
+        mentionType: 'comment',
+        siteName: 'Test Site',
+        content: 'Hello @testuser, check this out!',
+        url: 'https://test.com/comments/1',
+      });
     });
 
     it('should not send email when mentioned user is not found', async () => {
@@ -150,15 +148,11 @@ describe('NotificationService', () => {
 
       await service.sendInviteNotification(mockUser, mockSite, secretToken);
 
-      expect(emailService.sendWithTemplate).toHaveBeenCalledWith(
-        'user@example.com',
-        expect.any(Object),
-        {
-          siteName: 'Test Site',
-          inviteCode: 'secret123',
-          appUrl: 'https://app.pinco.com/api',
-        },
-      );
+      expect(emailService.sendWithTemplate).toHaveBeenCalledWith('user@example.com', expect.any(Object), {
+        siteName: 'Test Site',
+        inviteCode: 'secret123',
+        appUrl: 'https://app.pinco.com/api',
+      });
     });
   });
 

@@ -1,36 +1,23 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  UseInterceptors,
-  SerializeOptions,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-  ApiConsumes,
-} from '@nestjs/swagger';
+import { Repository } from 'typeorm';
+
+import { Body, Controller, Get, Param, Post, SerializeOptions, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ReplyService } from './reply.service';
-import { CreateReplyDto } from './dto/create-reply.dto';
-import { UpdateReplyDto } from './dto/update-reply.dto';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { CurrentSite } from '../../common/decorators/current-site.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { CurrentSite } from '../../common/decorators/current-site.decorator';
-import { Site } from '../site/site.entity';
-import { RequestUser } from '../../types/express';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
 import { UserRole } from '../user/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { CreateReplyDto } from './dto/create-reply.dto';
+import { UpdateReplyDto } from './dto/update-reply.dto';
 import { Reply } from './reply.entity';
+import { ReplyService } from './reply.service';
 
 @ApiTags('replies')
 @Controller('replies')
@@ -70,11 +57,7 @@ export class ReplyController {
   @ApiOperation({ summary: 'Create a new reply' })
   @ApiBody({ type: CreateReplyDto })
   @ApiResponse({ status: 201, description: 'Reply created successfully' })
-  create(
-    @Body() createDto: CreateReplyDto,
-    @CurrentSite() site: Site,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
+  create(@Body() createDto: CreateReplyDto, @CurrentSite() site: Site, @CurrentUser() currentUser: RequestUser) {
     return this.replyService.create(createDto, site, currentUser);
   }
 

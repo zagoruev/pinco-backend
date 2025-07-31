@@ -1,38 +1,35 @@
+import { Repository } from 'typeorm';
+
 import {
+  Body,
   Controller,
   Get,
-  Post,
   Param,
-  Body,
+  ParseIntPipe,
+  Post,
+  SerializeOptions,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
-  UploadedFile,
-  ParseIntPipe,
-  SerializeOptions,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiConsumes,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { CurrentSite } from '../../common/decorators/current-site.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
+import { OriginGuard } from '../../common/guards/origin.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
+import { UserRole } from '../user/user.entity';
+import { Comment } from './comment.entity';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { OriginGuard } from '../../common/guards/origin.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { CurrentSite } from '../../common/decorators/current-site.decorator';
-import { Site } from '../site/site.entity';
-import { RequestUser } from '../../types/express';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../user/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Comment } from './comment.entity';
+
 @ApiTags('comments')
 @Controller('comments')
 @UseGuards(CookieAuthGuard)
@@ -133,10 +130,7 @@ export class CommentController {
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Mark all site comments as viewed by user' })
   @ApiResponse({ status: 200, description: 'All comments marked as viewed' })
-  markAllAsViewed(
-    @CurrentSite() site: Site,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
+  markAllAsViewed(@CurrentSite() site: Site, @CurrentUser() currentUser: RequestUser) {
     return this.commentService.markAllAsViewed(site, currentUser);
   }
 }

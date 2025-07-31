@@ -1,8 +1,10 @@
 import 'reflect-metadata';
+
 import { ExecutionContext } from '@nestjs/common';
-import { CurrentUser } from './current-user.decorator';
-import { RequestUser } from '../../types/express';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
+
+import { RequestUser } from '../../types/express';
+import { CurrentUser } from './current-user.decorator';
 
 describe('CurrentUser Decorator', () => {
   let mockUser: RequestUser;
@@ -60,7 +62,7 @@ describe('CurrentUser Decorator', () => {
     // Check metadata was applied
     const metadata = Reflect.getMetadata(ROUTE_ARGS_METADATA, TestController, 'testMethod');
     expect(metadata).toBeDefined();
-    
+
     const keys = Object.keys(metadata);
     expect(keys.length).toBeGreaterThan(0);
   });
@@ -163,7 +165,7 @@ describe('CurrentUser Decorator', () => {
 
     if (decoratorMetadata && decoratorMetadata.factory) {
       decoratorMetadata.factory(undefined, mockExecutionContext);
-      
+
       expect(mockExecutionContext.switchToHttp).toHaveBeenCalled();
       const httpContext = mockExecutionContext.switchToHttp();
       expect(httpContext.getRequest).toHaveBeenCalled();
@@ -172,17 +174,14 @@ describe('CurrentUser Decorator', () => {
 
   it('should work with multiple parameters', () => {
     class TestController {
-      testMethod(
-        @CurrentUser() user: RequestUser,
-        otherParam: string,
-      ) {
+      testMethod(@CurrentUser() user: RequestUser, otherParam: string) {
         return { user, otherParam };
       }
     }
 
     const metadata = Reflect.getMetadata(ROUTE_ARGS_METADATA, TestController, 'testMethod');
     expect(metadata).toBeDefined();
-    
+
     // Find the decorator metadata
     const keys = Object.keys(metadata);
     const decoratorMetadata = metadata[keys[0]];

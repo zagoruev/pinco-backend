@@ -1,16 +1,10 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
-import { UserSite } from './user-site.entity';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+
+import { CommentView } from '../comment/comment-view.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
-import { CommentView } from '../comment/comment-view.entity';
+import { UserSite } from './user-site.entity';
 
 export enum UserRole {
   ROOT = 'ROOT',
@@ -43,13 +37,7 @@ export class User {
 
   @Expose()
   get color(): string {
-    return USER_COLORS[
-      Math.abs(
-        this.email
-          .split('')
-          .reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0),
-      ) % 10
-    ];
+    return USER_COLORS[Math.abs(this.email.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0)) % 10];
   }
 
   @Column({ length: 255, unique: true })

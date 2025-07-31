@@ -1,5 +1,6 @@
-import { User, UserRole, USER_COLORS } from './user.entity';
 import { plainToInstance } from 'class-transformer';
+
+import { USER_COLORS, User, UserRole } from './user.entity';
 
 describe('User Entity', () => {
   describe('USER_COLORS', () => {
@@ -59,10 +60,10 @@ describe('User Entity', () => {
     it('should generate consistent color based on email', () => {
       const user = new User();
       user.email = 'test@example.com';
-      
+
       const color1 = user.color;
       const color2 = user.color;
-      
+
       expect(color1).toBe(color2);
       expect(USER_COLORS).toContain(color1);
     });
@@ -70,10 +71,10 @@ describe('User Entity', () => {
     it('should generate different colors for different emails', () => {
       const user1 = new User();
       user1.email = 'user1@example.com';
-      
+
       const user2 = new User();
       user2.email = 'user2@example.com';
-      
+
       // They might have the same color due to modulo, but they should be valid colors
       expect(USER_COLORS).toContain(user1.color);
       expect(USER_COLORS).toContain(user2.color);
@@ -110,7 +111,7 @@ describe('User Entity', () => {
         'alice@wonderland.com',
       ];
 
-      emails.forEach(email => {
+      emails.forEach((email) => {
         const user = new User();
         user.email = email;
         const color = user.color;

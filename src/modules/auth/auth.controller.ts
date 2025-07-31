@@ -1,18 +1,11 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  Res,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
+
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Res } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
 import { InviteLoginDto } from './dto/invite-login.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -24,10 +17,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password (Admin/Owner only)' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(
-    @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
     const { token, user } = await this.authService.login(loginDto);
 
     this.authService.setAuthCookie(response, token);
@@ -39,10 +29,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with invite token' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Invalid invite token' })
-  async loginWithInvite(
-    @Query() { invite }: InviteLoginDto,
-    @Res() response: Response,
-  ) {
+  async loginWithInvite(@Query() { invite }: InviteLoginDto, @Res() response: Response) {
     const { token, site } = await this.authService.loginWithInvite(invite);
 
     this.authService.setAuthCookie(response, token);

@@ -1,6 +1,7 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ScreenshotStrategy } from './strategies/screenshot-strategy.interface';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { Comment } from '../comment/comment.entity';
+import { ScreenshotStrategy } from './strategies/screenshot-strategy.interface';
 
 export const SCREENSHOT_STRATEGY = 'SCREENSHOT_STRATEGY';
 

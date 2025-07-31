@@ -31,9 +31,7 @@ describe('MentionTemplate', () => {
       };
 
       const subject = template.subject(data);
-      expect(subject).toBe(
-        'Jane Smith mentioned you in a reply on Another Site',
-      );
+      expect(subject).toBe('Jane Smith mentioned you in a reply on Another Site');
     });
   });
 
@@ -50,9 +48,7 @@ describe('MentionTemplate', () => {
       const html = template.html(data);
 
       expect(html).toContain('You were mentioned!');
-      expect(html).toContain(
-        'John &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
-      );
+      expect(html).toContain('John &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
       expect(html).toContain('Site &amp; Co.');
       expect(html).toContain('Hello @user &lt;strong&gt;test&lt;/strong&gt;');
       expect(html).toContain('View comment');

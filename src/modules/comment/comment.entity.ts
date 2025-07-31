@@ -1,18 +1,19 @@
+import { Exclude, Expose, Transform } from 'class-transformer';
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../user/user.entity';
-import { Site } from '../site/site.entity';
+
 import { Reply } from '../reply/reply.entity';
+import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
 import { CommentView } from './comment-view.entity';
-import { Exclude, Expose, Transform } from 'class-transformer';
 
 export const COMMENT_PREFIX = 'c-';
 
@@ -55,33 +56,19 @@ export class Comment {
   resolved: boolean;
 
   @CreateDateColumn()
-  @Transform(
-    ({ value }: { value: Date }) =>
-      value.toISOString().slice(0, 19).replace('T', ' '),
-    { groups: ['widget'] },
-  )
+  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
   created: Date;
 
   @UpdateDateColumn()
-  @Transform(
-    ({ value }: { value: Date }) =>
-      value.toISOString().slice(0, 19).replace('T', ' '),
-    { groups: ['widget'] },
-  )
+  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
   updated: Date;
 
   screenshot: string | null;
 
   @Expose()
-  @Transform(
-    ({ value }: { value: Date }) =>
-      value.toISOString().slice(0, 19).replace('T', ' '),
-    { groups: ['widget'] },
-  )
+  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
   get viewed(): Date | null {
-    return (
-      this.views?.find((view) => view.user_id === this.user_id)?.viewed || null
-    );
+    return this.views?.find((view) => view.user_id === this.user_id)?.viewed || null;
   }
 
   @Exclude()

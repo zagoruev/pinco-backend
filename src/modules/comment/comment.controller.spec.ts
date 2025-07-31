@@ -1,16 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CommentController } from './comment.controller';
-import { CommentService } from './comment.service';
-import { Comment } from './comment.entity';
-import { Site } from '../site/site.entity';
-import { User } from '../user/user.entity';
-import { RequestUser } from '../../types/express';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
+import { CommentController } from './comment.controller';
+import { Comment } from './comment.entity';
+import { CommentService } from './comment.service';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 describe('CommentController', () => {
   let controller: CommentController;
@@ -163,11 +164,7 @@ describe('CommentController', () => {
         mockRequestUser,
       );
 
-      expect(service.create).toHaveBeenCalledWith(
-        createDto,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.create).toHaveBeenCalledWith(createDto, mockSite, mockRequestUser);
       expect(result).toEqual(mockComment);
     });
 
@@ -187,18 +184,9 @@ describe('CommentController', () => {
 
       const createDtoWithScreenshot = { ...createDto, screenshot: mockFile };
 
-      const result = await controller.create(
-        createDto,
-        mockFile,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.create(createDto, mockFile, mockSite, mockRequestUser);
 
-      expect(service.create).toHaveBeenCalledWith(
-        createDtoWithScreenshot,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.create).toHaveBeenCalledWith(createDtoWithScreenshot, mockSite, mockRequestUser);
       expect(result).toEqual(mockComment);
     });
   });
@@ -210,68 +198,36 @@ describe('CommentController', () => {
         message: 'Updated comment',
       };
 
-      const result = await controller.update(
-        1,
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.update(1, updateDto, mockSite, mockRequestUser);
 
-      expect(service.update).toHaveBeenCalledWith(
-        1,
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.update).toHaveBeenCalledWith(1, updateDto, mockSite, mockRequestUser);
       expect(result).toEqual(mockComment);
     });
   });
 
   describe('markAsViewed', () => {
     it('should mark comment as viewed', async () => {
-      const result = await controller.markAsViewed(
-        1,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.markAsViewed(1, mockSite, mockRequestUser);
 
-      expect(service.markAsViewed).toHaveBeenCalledWith(
-        1,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.markAsViewed).toHaveBeenCalledWith(1, mockSite, mockRequestUser);
       expect(result).toEqual(mockComment);
     });
   });
 
   describe('markAsUnviewed', () => {
     it('should mark comment as unviewed', async () => {
-      const result = await controller.markAsUnviewed(
-        1,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.markAsUnviewed(1, mockSite, mockRequestUser);
 
-      expect(service.markAsUnviewed).toHaveBeenCalledWith(
-        1,
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.markAsUnviewed).toHaveBeenCalledWith(1, mockSite, mockRequestUser);
       expect(result).toEqual(mockComment);
     });
   });
 
   describe('markAllAsViewed', () => {
     it('should mark all comments as viewed', async () => {
-      const result = await controller.markAllAsViewed(
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await controller.markAllAsViewed(mockSite, mockRequestUser);
 
-      expect(service.markAllAsViewed).toHaveBeenCalledWith(
-        mockSite,
-        mockRequestUser,
-      );
+      expect(service.markAllAsViewed).toHaveBeenCalledWith(mockSite, mockRequestUser);
       expect(result).toEqual({ success: true });
     });
   });

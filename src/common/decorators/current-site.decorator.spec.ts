@@ -1,8 +1,10 @@
 import 'reflect-metadata';
+
 import { ExecutionContext } from '@nestjs/common';
-import { CurrentSite } from './current-site.decorator';
-import { Site } from '../../modules/site/site.entity';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
+
+import { Site } from '../../modules/site/site.entity';
+import { CurrentSite } from './current-site.decorator';
 
 describe('CurrentSite Decorator', () => {
   let mockSite: Site;
@@ -66,7 +68,7 @@ describe('CurrentSite Decorator', () => {
     // Check metadata was applied
     const metadata = Reflect.getMetadata(ROUTE_ARGS_METADATA, TestController, 'testMethod');
     expect(metadata).toBeDefined();
-    
+
     const keys = Object.keys(metadata);
     expect(keys.length).toBeGreaterThan(0);
   });
@@ -175,7 +177,7 @@ describe('CurrentSite Decorator', () => {
 
     if (decoratorMetadata && decoratorMetadata.factory) {
       decoratorMetadata.factory(undefined, mockExecutionContext);
-      
+
       expect(mockExecutionContext.switchToHttp).toHaveBeenCalled();
       const httpContext = mockExecutionContext.switchToHttp();
       expect(httpContext.getRequest).toHaveBeenCalled();
@@ -184,17 +186,14 @@ describe('CurrentSite Decorator', () => {
 
   it('should work with multiple parameters', () => {
     class TestController {
-      testMethod(
-        @CurrentSite() site: Site,
-        otherParam: string,
-      ) {
+      testMethod(@CurrentSite() site: Site, otherParam: string) {
         return { site, otherParam };
       }
     }
 
     const metadata = Reflect.getMetadata(ROUTE_ARGS_METADATA, TestController, 'testMethod');
     expect(metadata).toBeDefined();
-    
+
     // Find the decorator metadata
     const keys = Object.keys(metadata);
     const decoratorMetadata = metadata[keys[0]];

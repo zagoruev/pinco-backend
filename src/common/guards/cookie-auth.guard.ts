@@ -1,11 +1,8 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
+
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+
 import { TokenService } from '../../modules/auth/token.service';
 import { SiteService } from '../../modules/site/site.service';
 
@@ -27,10 +24,10 @@ export class CookieAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isOptional = this.reflector.getAllAndOverride<boolean>(
-      OPTIONAL_AUTH_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const isOptional = this.reflector.getAllAndOverride<boolean>(OPTIONAL_AUTH_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     const request = context.switchToHttp().getRequest<RequestWithToken>();
     const token = this.extractTokenFromCookie(request, isOptional);
@@ -56,10 +53,7 @@ export class CookieAuthGuard implements CanActivate {
     }
   }
 
-  private extractTokenFromCookie(
-    request: RequestWithToken,
-    isOptional?: boolean,
-  ): string | null {
+  private extractTokenFromCookie(request: RequestWithToken, isOptional?: boolean): string | null {
     const token = request.signedCookies.token;
 
     if (!token) {

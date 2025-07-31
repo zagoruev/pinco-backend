@@ -1,14 +1,16 @@
+import { Repository } from 'typeorm';
+
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { ReplyService } from './reply.service';
-import { Reply } from './reply.entity';
+
+import { RequestUser } from '../../types/express';
 import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
 import { User, UserRole } from '../user/user.entity';
-import { RequestUser } from '../../types/express';
+import { Reply } from './reply.entity';
+import { ReplyService } from './reply.service';
 import * as replyUtils from './reply.utils';
 
 jest.mock('./reply.utils');
@@ -136,9 +138,7 @@ describe('ReplyService', () => {
 
     service = module.get<ReplyService>(ReplyService);
     replyRepository = module.get<Repository<Reply>>(getRepositoryToken(Reply));
-    commentRepository = module.get<Repository<Comment>>(
-      getRepositoryToken(Comment),
-    );
+    commentRepository = module.get<Repository<Comment>>(getRepositoryToken(Comment));
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
@@ -183,18 +183,14 @@ describe('ReplyService', () => {
     });
 
     it('should throw error if comment does not exist', async () => {
-      jest
-        .spyOn(commentRepository, 'findOneOrFail')
-        .mockRejectedValue(new Error('Entity not found'));
+      jest.spyOn(commentRepository, 'findOneOrFail').mockRejectedValue(new Error('Entity not found'));
 
       const createDto = {
         comment_id: 999,
         message: 'New reply',
       };
 
-      await expect(
-        service.create(createDto, mockSite, mockRequestUser),
-      ).rejects.toThrow('Entity not found');
+      await expect(service.create(createDto, mockSite, mockRequestUser)).rejects.toThrow('Entity not found');
     });
 
     it('should mark comment as resolved if reply contains resolve marker', async () => {
@@ -213,9 +209,7 @@ describe('ReplyService', () => {
       // Mock isResolveAdded to return true for the resolve marker
       (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(true);
 
-      jest
-        .spyOn(commentRepository, 'findOneOrFail')
-        .mockResolvedValue(unresolvedComment);
+      jest.spyOn(commentRepository, 'findOneOrFail').mockResolvedValue(unresolvedComment);
       jest.spyOn(commentRepository, 'save').mockResolvedValue({
         ...unresolvedComment,
         resolved: true,
@@ -227,16 +221,12 @@ describe('ReplyService', () => {
       };
       jest.spyOn(replyRepository, 'create').mockReturnValue(resolveReply);
       jest.spyOn(replyRepository, 'save').mockResolvedValue(resolveReply);
-      jest
-        .spyOn(replyRepository, 'findOneOrFail')
-        .mockResolvedValue(resolveReply);
+      jest.spyOn(replyRepository, 'findOneOrFail').mockResolvedValue(resolveReply);
 
       await service.create(createDto, mockSite, mockRequestUser);
 
       expect(replyUtils.isResolveAdded).toHaveBeenCalledWith('{{{resolved}}}');
-      expect(commentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ resolved: true }),
-      );
+      expect(commentRepository.save).toHaveBeenCalledWith(expect.objectContaining({ resolved: true }));
     });
 
     it('should not mark comment as resolved if already resolved', async () => {
@@ -255,9 +245,7 @@ describe('ReplyService', () => {
       // Mock isResolveAdded to return true for the resolve marker
       (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(true);
 
-      jest
-        .spyOn(commentRepository, 'findOneOrFail')
-        .mockResolvedValue(resolvedComment);
+      jest.spyOn(commentRepository, 'findOneOrFail').mockResolvedValue(resolvedComment);
 
       const resolveReply = {
         ...mockReply,
@@ -265,9 +253,7 @@ describe('ReplyService', () => {
       };
       jest.spyOn(replyRepository, 'create').mockReturnValue(resolveReply);
       jest.spyOn(replyRepository, 'save').mockResolvedValue(resolveReply);
-      jest
-        .spyOn(replyRepository, 'findOneOrFail')
-        .mockResolvedValue(resolveReply);
+      jest.spyOn(replyRepository, 'findOneOrFail').mockResolvedValue(resolveReply);
 
       await service.create(createDto, mockSite, mockRequestUser);
 
@@ -291,9 +277,7 @@ describe('ReplyService', () => {
       // Mock isResolveAdded to return false
       (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(false);
 
-      jest
-        .spyOn(commentRepository, 'findOneOrFail')
-        .mockResolvedValue(unresolvedComment);
+      jest.spyOn(commentRepository, 'findOneOrFail').mockResolvedValue(unresolvedComment);
       jest.spyOn(replyRepository, 'create').mockReturnValue(mockReply);
       jest.spyOn(replyRepository, 'save').mockResolvedValue(mockReply);
       jest.spyOn(replyRepository, 'findOneOrFail').mockResolvedValue(mockReply);
@@ -338,12 +322,7 @@ describe('ReplyService', () => {
         message: 'Updated reply',
       };
 
-      const result = await service.update(
-        1,
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await service.update(1, updateDto, mockSite, mockRequestUser);
 
       expect(replyRepository.save).toHaveBeenCalledWith({
         ...mockReply,
@@ -356,34 +335,26 @@ describe('ReplyService', () => {
     });
 
     it('should throw error if reply does not exist', async () => {
-      jest
-        .spyOn(replyRepository, 'findOneOrFail')
-        .mockRejectedValue(new Error('Entity not found'));
+      jest.spyOn(replyRepository, 'findOneOrFail').mockRejectedValue(new Error('Entity not found'));
 
       const updateDto = {
         id: 999,
         message: 'Updated reply',
       };
 
-      await expect(
-        service.update(999, updateDto, mockSite, mockRequestUser),
-      ).rejects.toThrow('Entity not found');
+      await expect(service.update(999, updateDto, mockSite, mockRequestUser)).rejects.toThrow('Entity not found');
     });
 
     it('should throw BadRequestException if user is not the author', async () => {
       const otherUserReply = { ...mockReply, user_id: 2 };
-      jest
-        .spyOn(replyRepository, 'findOneOrFail')
-        .mockResolvedValue(otherUserReply);
+      jest.spyOn(replyRepository, 'findOneOrFail').mockResolvedValue(otherUserReply);
 
       const updateDto = {
         id: 1,
         message: 'Updated reply',
       };
 
-      await expect(
-        service.update(1, updateDto, mockSite, mockRequestUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update(1, updateDto, mockSite, mockRequestUser)).rejects.toThrow(BadRequestException);
     });
   });
 });

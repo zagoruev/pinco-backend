@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+
+import { Injectable } from '@nestjs/common';
+
 import { AppConfigService } from '../config/config.service';
 import { EmailTemplate, EmailTemplateData } from './templates';
 
@@ -39,11 +41,7 @@ export class EmailService {
     }) as Promise<void>);
   }
 
-  async sendWithTemplate<T extends EmailTemplateData>(
-    to: string,
-    template: EmailTemplate<T>,
-    data: T,
-  ): Promise<void> {
+  async sendWithTemplate<T extends EmailTemplateData>(to: string, template: EmailTemplate<T>, data: T): Promise<void> {
     await this.sendEmail({
       to,
       subject: template.subject(data),

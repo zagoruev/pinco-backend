@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
@@ -22,9 +23,7 @@ describe('HealthController', () => {
 
       expect(result).toHaveProperty('status', 'ok');
       expect(result).toHaveProperty('timestamp');
-      expect(result.timestamp).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
-      );
+      expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
     });
 
     it('should return current timestamp', () => {
@@ -32,12 +31,8 @@ describe('HealthController', () => {
       const result = controller.check();
       const after = new Date().toISOString();
 
-      expect(new Date(result.timestamp).getTime()).toBeGreaterThanOrEqual(
-        new Date(before).getTime(),
-      );
-      expect(new Date(result.timestamp).getTime()).toBeLessThanOrEqual(
-        new Date(after).getTime(),
-      );
+      expect(new Date(result.timestamp).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime());
+      expect(new Date(result.timestamp).getTime()).toBeLessThanOrEqual(new Date(after).getTime());
     });
   });
 });

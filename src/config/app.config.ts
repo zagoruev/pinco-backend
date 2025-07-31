@@ -1,5 +1,6 @@
-import { registerAs } from '@nestjs/config';
 import parse from 'parse-duration';
+
+import { registerAs } from '@nestjs/config';
 
 export default registerAs('app', () => ({
   isDev: process.env.NODE_ENV === 'development',
@@ -10,6 +11,5 @@ export default registerAs('app', () => ({
   authTokenExpiresIn: parse(process.env.AUTH_TOKEN_EXPIRES_IN)!,
   widgetUrl: process.env.WIDGET_URL!,
   widgetDevUrl: process.env.WIDGET_DEV_URL,
-  widgetIsDev:
-    process.env.WIDGET_IS_DEV === 'true' && process.env.WIDGET_DEV_URL,
+  widgetIsDev: process.env.WIDGET_IS_DEV === 'true' && process.env.WIDGET_DEV_URL,
 }));

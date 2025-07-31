@@ -1,8 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { EmailService } from './email.service';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AppConfigService } from '../config/config.service';
+import { EmailService } from './email.service';
 import { EmailTemplate, EmailTemplateData } from './templates';
 
 jest.mock('nodemailer', () => ({
@@ -26,19 +28,17 @@ describe('EmailService', () => {
         {
           provide: AppConfigService,
           useValue: {
-            get: jest.fn(
-              (key: string, defaultValue?: string | number | boolean) => {
-                const config: Record<string, string | number | boolean> = {
-                  'email.host': 'smtp.test.com',
-                  'email.port': 587,
-                  'email.secure': false,
-                  'email.user': 'test@test.com',
-                  'email.pass': 'password',
-                  'email.from': 'noreply@pinco.com',
-                };
-                return key in config ? config[key] : defaultValue;
-              },
-            ),
+            get: jest.fn((key: string, defaultValue?: string | number | boolean) => {
+              const config: Record<string, string | number | boolean> = {
+                'email.host': 'smtp.test.com',
+                'email.port': 587,
+                'email.secure': false,
+                'email.user': 'test@test.com',
+                'email.pass': 'password',
+                'email.from': 'noreply@pinco.com',
+              };
+              return key in config ? config[key] : defaultValue;
+            }),
           },
         },
       ],

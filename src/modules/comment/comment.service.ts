@@ -1,25 +1,20 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { customAlphabet } from 'nanoid';
-import { Comment } from './comment.entity';
-import { CommentView } from './comment-view.entity';
-import { Site } from '../site/site.entity';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
-import { ScreenshotService } from '../screenshot/screenshot.service';
+import { Repository } from 'typeorm';
+
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { RequestUser } from '../../types/express';
 import { ReplyService } from '../reply/reply.service';
+import { ScreenshotService } from '../screenshot/screenshot.service';
+import { Site } from '../site/site.entity';
+import { CommentView } from './comment-view.entity';
+import { Comment } from './comment.entity';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
-const generateUniqid = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  13,
-);
+const generateUniqid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 13);
 
 @Injectable()
 export class CommentService {
@@ -53,11 +48,7 @@ export class CommentService {
     });
   }
 
-  async create(
-    createDto: CreateCommentDto,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<Comment> {
+  async create(createDto: CreateCommentDto, site: Site, currentUser: RequestUser): Promise<Comment> {
     const uniqid = generateUniqid();
 
     const comment = this.commentRepository.create({
@@ -106,12 +97,7 @@ export class CommentService {
     };
   }
 
-  async update(
-    id: number,
-    updateDto: UpdateCommentDto,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<Comment> {
+  async update(id: number, updateDto: UpdateCommentDto, site: Site, currentUser: RequestUser): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
       relations: ['user', 'replies', 'replies.user', 'views'],
@@ -127,8 +113,7 @@ export class CommentService {
 
     if (updateDto.message !== undefined) comment.message = updateDto.message;
     if (updateDto.details !== undefined) comment.details = updateDto.details;
-    if (updateDto.reference !== undefined)
-      comment.reference = updateDto.reference;
+    if (updateDto.reference !== undefined) comment.reference = updateDto.reference;
     if (updateDto.url !== undefined) comment.url = updateDto.url;
     if (updateDto.resolved !== undefined) comment.resolved = updateDto.resolved;
 
@@ -143,11 +128,7 @@ export class CommentService {
     return savedComment;
   }
 
-  async markAsViewed(
-    id: number,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<{ viewed: Date; user_id: number }> {
+  async markAsViewed(id: number, site: Site, currentUser: RequestUser): Promise<{ viewed: Date; user_id: number }> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
       relations: ['views'],
@@ -157,9 +138,7 @@ export class CommentService {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
-    const isAlreadyViewed = comment.views.find(
-      (view) => view.user_id === currentUser.id,
-    );
+    const isAlreadyViewed = comment.views.find((view) => view.user_id === currentUser.id);
 
     if (isAlreadyViewed) {
       return { viewed: isAlreadyViewed.viewed, user_id: currentUser.id };
@@ -177,11 +156,7 @@ export class CommentService {
     };
   }
 
-  async markAsUnviewed(
-    id: number,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<{ viewed: null; user_id: number }> {
+  async markAsUnviewed(id: number, site: Site, currentUser: RequestUser): Promise<{ viewed: null; user_id: number }> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
     });

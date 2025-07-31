@@ -1,13 +1,6 @@
-import {
-  IsString,
-  IsOptional,
-  IsObject,
-  ValidateNested,
-  IsNumber,
-  IsUrl,
-  IsNotEmpty,
-} from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUrl, ValidateNested } from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
 
 class CommentDetailsDto {

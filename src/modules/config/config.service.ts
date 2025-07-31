@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LeafTypes, Leaves } from './config.types';
+
 import { Config } from '../../config';
+import { LeafTypes, Leaves } from './config.types';
 
 @Injectable()
 export class AppConfigService {

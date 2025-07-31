@@ -1,4 +1,5 @@
 import * as Joi from 'joi';
+
 import appConfig from './app.config';
 import databaseConfig from './database.config';
 import emailConfig from './email.config';
@@ -39,10 +40,4 @@ export type Config = {
   screenshot: ReturnType<typeof screenshotConfig>;
 };
 
-export {
-  appConfig,
-  databaseConfig,
-  emailConfig,
-  screenshotConfig,
-  validationSchema,
-};
+export { appConfig, databaseConfig, emailConfig, screenshotConfig, validationSchema };

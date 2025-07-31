@@ -1,16 +1,18 @@
+import * as argon2 from 'argon2';
+import { Response } from 'express';
+import { Repository } from 'typeorm';
+
+import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as argon2 from 'argon2';
-import { UnauthorizedException } from '@nestjs/common';
-import { Response } from 'express';
-import { AuthService } from './auth.service';
-import { TokenService } from './token.service';
-import { User, UserRole } from '../user/user.entity';
-import { UserSite, UserSiteRole } from '../user/user-site.entity';
-import { UserSiteService } from '../user/user-site.service';
+
 import { AppConfigService } from '../config/config.service';
 import { Site } from '../site/site.entity';
+import { UserSite, UserSiteRole } from '../user/user-site.entity';
+import { UserSiteService } from '../user/user-site.service';
+import { User, UserRole } from '../user/user.entity';
+import { AuthService } from './auth.service';
+import { TokenService } from './token.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -82,10 +84,7 @@ describe('AuthService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(argon2, 'verify').mockResolvedValue(true);
 
-      const result = await service.validateUser(
-        'admin@example.com',
-        'password',
-      );
+      const result = await service.validateUser('admin@example.com', 'password');
 
       expect(result).toEqual(mockUser);
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -97,10 +96,7 @@ describe('AuthService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(argon2, 'verify').mockResolvedValue(false);
 
-      const result = await service.validateUser(
-        'admin@example.com',
-        'wrong-password',
-      );
+      const result = await service.validateUser('admin@example.com', 'wrong-password');
 
       expect(result).toBeNull();
     });
@@ -138,9 +134,9 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException for invalid login', async () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(null);
 
-      await expect(
-        service.login({ email: 'admin@example.com', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'admin@example.com', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -170,9 +166,7 @@ describe('AuthService', () => {
     } as UserSite;
 
     it('should return token, user and site for valid invite', async () => {
-      jest
-        .spyOn(userSiteService, 'validateInviteToken')
-        .mockResolvedValue({ user: mockUser, userSite: mockUserSite });
+      jest.spyOn(userSiteService, 'validateInviteToken').mockResolvedValue({ user: mockUser, userSite: mockUserSite });
 
       const result = await service.loginWithInvite('valid-invite');
 
@@ -181,9 +175,7 @@ describe('AuthService', () => {
         user: mockUser,
         site: mockSite,
       });
-      expect(userSiteService.validateInviteToken).toHaveBeenCalledWith(
-        'valid-invite',
-      );
+      expect(userSiteService.validateInviteToken).toHaveBeenCalledWith('valid-invite');
     });
 
     it('should throw UnauthorizedException for invalid invite', async () => {
@@ -192,9 +184,7 @@ describe('AuthService', () => {
         userSite: null as unknown as UserSite,
       });
 
-      await expect(service.loginWithInvite('invalid-invite')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.loginWithInvite('invalid-invite')).rejects.toThrow(UnauthorizedException);
     });
   });
 

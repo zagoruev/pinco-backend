@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ScreenshotStrategy } from './screenshot-strategy.interface';
+
+import { Injectable } from '@nestjs/common';
+
 import { Comment } from '../../comment/comment.entity';
 import { AppConfigService } from '../../config/config.service';
+import { ScreenshotStrategy } from './screenshot-strategy.interface';
 
 @Injectable()
 export class LocalScreenshotStrategy implements ScreenshotStrategy {

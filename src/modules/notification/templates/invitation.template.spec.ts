@@ -1,7 +1,4 @@
-import {
-  InvitationTemplate,
-  InvitationTemplateData,
-} from './invitation.template';
+import { InvitationTemplate, InvitationTemplateData } from './invitation.template';
 
 describe('InvitationTemplate', () => {
   let template: InvitationTemplate;
@@ -18,9 +15,7 @@ describe('InvitationTemplate', () => {
       };
 
       const subject = template.subject(data);
-      expect(subject).toBe(
-        "You've been invited to collaborate My Awesome Site",
-      );
+      expect(subject).toBe("You've been invited to collaborate My Awesome Site");
     });
 
     it('should handle special characters in site name', () => {
@@ -58,9 +53,7 @@ describe('InvitationTemplate', () => {
 
       const html = template.html(data);
 
-      expect(html).toContain(
-        'https://custom.pinco.com/v1/auth/login?invite=test123',
-      );
+      expect(html).toContain('https://custom.pinco.com/v1/auth/login?invite=test123');
       expect(html).not.toContain('https://app.pinco.com');
     });
 
@@ -72,9 +65,7 @@ describe('InvitationTemplate', () => {
 
       const html = template.html(data);
 
-      expect(html).toContain(
-        '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
-      );
+      expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
       expect(html).not.toContain('<script>alert("xss")</script>');
     });
 
@@ -126,9 +117,7 @@ describe('InvitationTemplate', () => {
       const text = template.text(data);
 
       expect(text).toContain('Welcome to Test Site!');
-      expect(text).toContain(
-        "You've been invited to join Test Site as a collaborator",
-      );
+      expect(text).toContain("You've been invited to join Test Site as a collaborator");
       expect(text).toContain('undefined/v1/auth/login?invite=test123');
       expect(text).not.toContain('This invitation link will expire in 7 days');
       expect(text).not.toContain('<');

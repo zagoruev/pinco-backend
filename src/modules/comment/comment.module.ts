@@ -1,16 +1,18 @@
+import { memoryStorage } from 'multer';
+
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
-import { CommentService } from './comment.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Reply } from '../reply/reply.entity';
+import { ReplyModule } from '../reply/reply.module';
+import { ScreenshotModule } from '../screenshot/screenshot.module';
+import { Site } from '../site/site.entity';
+import { SiteModule } from '../site/site.module';
+import { CommentView } from './comment-view.entity';
 import { CommentController } from './comment.controller';
 import { Comment } from './comment.entity';
-import { CommentView } from './comment-view.entity';
-import { Reply } from '../reply/reply.entity';
-import { Site } from '../site/site.entity';
-import { ScreenshotModule } from '../screenshot/screenshot.module';
-import { memoryStorage } from 'multer';
-import { SiteModule } from '../site/site.module';
-import { ReplyModule } from '../reply/reply.module';
+import { CommentService } from './comment.service';
 
 @Module({
   imports: [

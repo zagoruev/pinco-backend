@@ -1,29 +1,31 @@
+import { Repository } from 'typeorm';
+
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SiteService } from './site.service';
-import { CreateSiteDto } from './dto/create-site.dto';
-import { UpdateSiteDto } from './dto/update-site.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../user/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Site } from './site.entity';
-import { UserSite } from '../user/user-site.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
+import { UserSite } from '../user/user-site.entity';
+import { UserRole } from '../user/user.entity';
+import { CreateSiteDto } from './dto/create-site.dto';
+import { UpdateSiteDto } from './dto/update-site.dto';
+import { Site } from './site.entity';
+import { SiteService } from './site.service';
 
 @ApiTags('sites')
 @Controller('sites')
@@ -83,10 +85,7 @@ export class SiteController {
     status: 409,
     description: 'Site with this domain already exists',
   })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateSiteDto: UpdateSiteDto,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateSiteDto: UpdateSiteDto) {
     return this.siteService.update(id, updateSiteDto);
   }
 

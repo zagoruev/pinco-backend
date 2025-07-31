@@ -1,16 +1,18 @@
+import { Repository } from 'typeorm';
+
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { CommentService } from './comment.service';
-import { Comment } from './comment.entity';
-import { CommentView } from './comment-view.entity';
+
+import { RequestUser } from '../../types/express';
+import { ReplyService } from '../reply/reply.service';
+import { ScreenshotService } from '../screenshot/screenshot.service';
 import { Site } from '../site/site.entity';
 import { User, UserRole } from '../user/user.entity';
-import { ScreenshotService } from '../screenshot/screenshot.service';
-import { ReplyService } from '../reply/reply.service';
-import { RequestUser } from '../../types/express';
+import { CommentView } from './comment-view.entity';
+import { Comment } from './comment.entity';
+import { CommentService } from './comment.service';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 
 describe('CommentService', () => {
@@ -102,11 +104,7 @@ describe('CommentService', () => {
           useValue: {
             save: jest
               .fn()
-              .mockImplementation((entities) =>
-                Promise.resolve(
-                  Array.isArray(entities) ? entities : [entities],
-                ),
-              ),
+              .mockImplementation((entities) => Promise.resolve(Array.isArray(entities) ? entities : [entities])),
             delete: jest.fn(),
             findOne: jest.fn(),
           },
@@ -135,12 +133,8 @@ describe('CommentService', () => {
     }).compile();
 
     service = module.get<CommentService>(CommentService);
-    commentRepository = module.get<Repository<Comment>>(
-      getRepositoryToken(Comment),
-    );
-    commentViewRepository = module.get<Repository<CommentView>>(
-      getRepositoryToken(CommentView),
-    );
+    commentRepository = module.get<Repository<Comment>>(getRepositoryToken(Comment));
+    commentViewRepository = module.get<Repository<CommentView>>(getRepositoryToken(CommentView));
     screenshotService = module.get<ScreenshotService>(ScreenshotService);
     replyService = module.get<ReplyService>(ReplyService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
@@ -159,14 +153,8 @@ describe('CommentService', () => {
 
       jest
         .spyOn(commentRepository, 'createQueryBuilder')
-        .mockReturnValue(
-          queryBuilder as unknown as ReturnType<
-            Repository<Comment>['createQueryBuilder']
-          >,
-        );
-      jest
-        .spyOn(screenshotService, 'getUrl')
-        .mockReturnValue('https://example.com/screenshots/abc123.jpg');
+        .mockReturnValue(queryBuilder as unknown as ReturnType<Repository<Comment>['createQueryBuilder']>);
+      jest.spyOn(screenshotService, 'getUrl').mockReturnValue('https://example.com/screenshots/abc123.jpg');
 
       const result = await service.findAll(mockSite, mockRequestUser);
 
@@ -176,12 +164,9 @@ describe('CommentService', () => {
         message: mockComment.message,
         screenshot: 'https://example.com/screenshots/abc123.jpg',
       });
-      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'comment.views',
-        'view',
-        'view.user_id = :userId',
-        { userId: mockRequestUser.id },
-      );
+      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('comment.views', 'view', 'view.user_id = :userId', {
+        userId: mockRequestUser.id,
+      });
     });
   });
 
@@ -239,26 +224,16 @@ describe('CommentService', () => {
         ...mockComment,
         screenshot: 'abc123def4567.jpg',
       } as Comment);
-      jest
-        .spyOn(screenshotService, 'save')
-        .mockResolvedValue('abc123def4567.jpg');
-      jest
-        .spyOn(screenshotService, 'getUrl')
-        .mockReturnValue('https://example.com/screenshots/abc123def4567.jpg');
+      jest.spyOn(screenshotService, 'save').mockResolvedValue('abc123def4567.jpg');
+      jest.spyOn(screenshotService, 'getUrl').mockReturnValue('https://example.com/screenshots/abc123def4567.jpg');
 
-      const result = await service.create(
-        createDtoWithScreenshot,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await service.create(createDtoWithScreenshot, mockSite, mockRequestUser);
 
       expect(screenshotService.save).toHaveBeenCalledWith(
         mockFile,
         expect.objectContaining({ uniqid: expect.any(String) }),
       );
-      expect(result.screenshot).toBe(
-        'https://example.com/screenshots/abc123def4567.jpg',
-      );
+      expect(result.screenshot).toBe('https://example.com/screenshots/abc123def4567.jpg');
     });
 
     it('should throw error when findOne returns null after saving', async () => {
@@ -266,9 +241,9 @@ describe('CommentService', () => {
       jest.spyOn(commentRepository, 'save').mockResolvedValue(mockComment);
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.create(createDto, mockSite, mockRequestUser)
-      ).rejects.toThrow('Failed to load created comment');
+      await expect(service.create(createDto, mockSite, mockRequestUser)).rejects.toThrow(
+        'Failed to load created comment',
+      );
     });
   });
 
@@ -286,12 +261,7 @@ describe('CommentService', () => {
       } as Comment);
       jest.spyOn(screenshotService, 'getUrl').mockReturnValue('screenshot-url');
 
-      const result = await service.update(
-        1,
-        updateDto,
-        mockSite,
-        mockRequestUser,
-      );
+      const result = await service.update(1, updateDto, mockSite, mockRequestUser);
 
       expect(result.message).toBe(updateDto.message);
       expect(result.screenshot).toBe('screenshot-url');
@@ -300,18 +270,14 @@ describe('CommentService', () => {
     it('should throw NotFoundException if comment not found', async () => {
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.update(999, updateDto, mockSite, mockRequestUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update(999, updateDto, mockSite, mockRequestUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if user is not the author', async () => {
       const differentUserPayload = { ...mockRequestUser, id: 2 };
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(mockComment);
 
-      await expect(
-        service.update(1, updateDto, mockSite, differentUserPayload),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update(1, updateDto, mockSite, differentUserPayload)).rejects.toThrow(BadRequestException);
     });
 
     it('should add resolve reply when marking as resolved', async () => {
@@ -324,12 +290,8 @@ describe('CommentService', () => {
         },
       } as Comment;
 
-      jest
-        .spyOn(commentRepository, 'findOne')
-        .mockResolvedValue(resolvedComment);
-      jest
-        .spyOn(commentRepository, 'save')
-        .mockResolvedValue({ ...resolvedComment, resolved: true } as Comment);
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(resolvedComment);
+      jest.spyOn(commentRepository, 'save').mockResolvedValue({ ...resolvedComment, resolved: true } as Comment);
       jest.spyOn(screenshotService, 'getUrl').mockReturnValue('screenshot-url');
 
       await service.update(1, updateDto, mockSite, mockRequestUser);
@@ -357,9 +319,7 @@ describe('CommentService', () => {
       const result = await service.update(1, updateDto, mockSite, mockRequestUser);
 
       expect(result.reference).toBe('new-reference');
-      expect(commentRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({ reference: 'new-reference' })
-      );
+      expect(commentRepository.save).toHaveBeenCalledWith(expect.objectContaining({ reference: 'new-reference' }));
     });
   });
 
@@ -396,9 +356,7 @@ describe('CommentService', () => {
         },
       } as Comment;
 
-      jest
-        .spyOn(commentRepository, 'findOne')
-        .mockResolvedValue(commentWithView);
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(commentWithView);
 
       const result = await service.markAsViewed(1, mockSite, mockRequestUser);
 
@@ -412,9 +370,7 @@ describe('CommentService', () => {
     it('should throw NotFoundException if comment not found', async () => {
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.markAsViewed(999, mockSite, mockRequestUser)
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.markAsViewed(999, mockSite, mockRequestUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -423,9 +379,7 @@ describe('CommentService', () => {
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(mockComment);
       jest
         .spyOn(commentViewRepository, 'delete')
-        .mockResolvedValue({ affected: 1 } as unknown as ReturnType<
-          Repository<CommentView>['delete']
-        >);
+        .mockResolvedValue({ affected: 1 } as unknown as ReturnType<Repository<CommentView>['delete']>);
 
       const result = await service.markAsUnviewed(1, mockSite, mockRequestUser);
 
@@ -438,9 +392,7 @@ describe('CommentService', () => {
     it('should throw NotFoundException if comment not found', async () => {
       jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.markAsUnviewed(999, mockSite, mockRequestUser)
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.markAsUnviewed(999, mockSite, mockRequestUser)).rejects.toThrow(NotFoundException);
     });
   });
 

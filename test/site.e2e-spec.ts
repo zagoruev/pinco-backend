@@ -1,17 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
 import * as cookieSignature from 'cookie-signature';
-import { SiteController } from '../src/modules/site/site.controller';
-import { SiteService } from '../src/modules/site/site.service';
-import { Site } from '../src/modules/site/site.entity';
-import { User, UserRole } from '../src/modules/user/user.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
+import * as request from 'supertest';
+
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { CookieAuthGuard } from '../src/common/guards/cookie-auth.guard';
 import { TokenService } from '../src/modules/auth/token.service';
-import { JwtService } from '@nestjs/jwt';
 import { AppConfigService } from '../src/modules/config/config.service';
+import { SiteController } from '../src/modules/site/site.controller';
+import { Site } from '../src/modules/site/site.entity';
+import { SiteService } from '../src/modules/site/site.service';
+import { UserSite } from '../src/modules/user/user-site.entity';
+import { User, UserRole } from '../src/modules/user/user.entity';
 
 describe('SiteController (e2e)', () => {
   let app: INestApplication;

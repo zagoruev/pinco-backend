@@ -1,9 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
-import { TokenService, TokenPayload } from './token.service';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AppConfigService } from '../config/config.service';
 import { User, UserRole } from '../user/user.entity';
+import { TokenPayload, TokenService } from './token.service';
 
 describe('TokenService', () => {
   let service: TokenService;
@@ -139,12 +140,8 @@ describe('TokenService', () => {
 
       mockJwtService.verify.mockReturnValue(mockPayload);
 
-      expect(() => service.verifyToken('invalid-token')).toThrow(
-        UnauthorizedException,
-      );
-      expect(() => service.verifyToken('invalid-token')).toThrow(
-        'Invalid authentication token',
-      );
+      expect(() => service.verifyToken('invalid-token')).toThrow(UnauthorizedException);
+      expect(() => service.verifyToken('invalid-token')).toThrow('Invalid authentication token');
     });
 
     it('should throw error if JWT verification fails', () => {
@@ -152,9 +149,7 @@ describe('TokenService', () => {
         throw new Error('JWT verification failed');
       });
 
-      expect(() => service.verifyToken('invalid-token')).toThrow(
-        'JWT verification failed',
-      );
+      expect(() => service.verifyToken('invalid-token')).toThrow('JWT verification failed');
     });
 
     it('should get config values for verification', () => {

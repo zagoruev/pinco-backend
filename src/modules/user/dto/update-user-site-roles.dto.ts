@@ -1,5 +1,7 @@
+import { IsArray, IsEnum, IsNumber } from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsArray, IsEnum } from 'class-validator';
+
 import { UserSiteRole } from '../user-site.entity';
 
 export class UpdateUserSiteRolesDto {

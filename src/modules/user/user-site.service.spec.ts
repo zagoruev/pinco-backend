@@ -1,14 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
-import { UserSiteService } from './user-site.service';
-import { UserSite, UserSiteRole } from './user-site.entity';
-import { User, UserRole } from './user.entity';
-import { Site } from '../site/site.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
+import { UserSite, UserSiteRole } from './user-site.entity';
+import { UserSiteService } from './user-site.service';
+import { User, UserRole } from './user.entity';
 
 describe('UserSiteService', () => {
   let service: UserSiteService;
@@ -114,9 +116,7 @@ describe('UserSiteService', () => {
     }).compile();
 
     service = module.get<UserSiteService>(UserSiteService);
-    userSiteRepository = module.get<Repository<UserSite>>(
-      getRepositoryToken(UserSite),
-    );
+    userSiteRepository = module.get<Repository<UserSite>>(getRepositoryToken(UserSite));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     siteRepository = module.get<Repository<Site>>(getRepositoryToken(Site));
     jwtService = module.get<JwtService>(JwtService);
@@ -131,9 +131,7 @@ describe('UserSiteService', () => {
     it('should add user to site successfully', async () => {
       jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(userSiteRepository, 'save').mockResolvedValue(mockUserSite);
-      jest
-        .spyOn(userSiteRepository, 'update')
-        .mockResolvedValue({ affected: 1 } as any);
+      jest.spyOn(userSiteRepository, 'update').mockResolvedValue({ affected: 1 } as any);
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(siteRepository, 'findOne').mockResolvedValue(mockSite);
       jest.spyOn(jwtService, 'sign').mockReturnValue('invite-token');
@@ -156,17 +154,15 @@ describe('UserSiteService', () => {
     it('should throw error if user already has access', async () => {
       jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(mockUserSite);
 
-      await expect(
-        service.addUserToSite(1, 1, [UserSiteRole.COLLABORATOR], false),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.addUserToSite(1, 1, [UserSiteRole.COLLABORATOR], false)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('removeUserFromSite', () => {
     it('should remove user from site', async () => {
-      jest
-        .spyOn(userSiteRepository, 'delete')
-        .mockResolvedValue({ affected: 1 } as any);
+      jest.spyOn(userSiteRepository, 'delete').mockResolvedValue({ affected: 1 } as any);
 
       await service.removeUserFromSite(1, 1);
 
@@ -180,9 +176,7 @@ describe('UserSiteService', () => {
   describe('generateInviteToken', () => {
     it('should generate invite token', async () => {
       jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(mockUserSite);
-      jest
-        .spyOn(userSiteRepository, 'update')
-        .mockResolvedValue({ affected: 1 } as any);
+      jest.spyOn(userSiteRepository, 'update').mockResolvedValue({ affected: 1 } as any);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mock-token');
 
       const result = await service.generateInviteToken(1, 1);
@@ -208,9 +202,7 @@ describe('UserSiteService', () => {
       };
 
       jest.spyOn(jwtService, 'verify').mockReturnValue(mockPayload);
-      jest
-        .spyOn(userSiteRepository, 'findOne')
-        .mockResolvedValue(mockUserSiteWithCode);
+      jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(mockUserSiteWithCode);
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
 
       const result = await service.validateInviteToken('valid-token');
@@ -226,9 +218,7 @@ describe('UserSiteService', () => {
         throw new Error('Invalid token');
       });
 
-      await expect(
-        service.validateInviteToken('invalid-token'),
-      ).rejects.toThrow();
+      await expect(service.validateInviteToken('invalid-token')).rejects.toThrow();
     });
 
     it('should throw UnauthorizedException if user site not found', async () => {
@@ -241,24 +231,17 @@ describe('UserSiteService', () => {
       jest.spyOn(jwtService, 'verify').mockReturnValue(mockPayload);
       jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.validateInviteToken('valid-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(service.validateInviteToken('valid-token')).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('revokeInvite', () => {
     it('should revoke invite successfully', async () => {
-      jest
-        .spyOn(userSiteRepository, 'update')
-        .mockResolvedValue({ affected: 1 } as any);
+      jest.spyOn(userSiteRepository, 'update').mockResolvedValue({ affected: 1 } as any);
 
       await service.revokeInvite(1, 1);
 
-      expect(userSiteRepository.update).toHaveBeenCalledWith(
-        { user_id: 1, site_id: 1 },
-        { invite_code: null },
-      );
+      expect(userSiteRepository.update).toHaveBeenCalledWith({ user_id: 1, site_id: 1 }, { invite_code: null });
     });
   });
 
@@ -267,9 +250,7 @@ describe('UserSiteService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(siteRepository, 'findOne').mockResolvedValue(mockSite);
       jest.spyOn(userSiteRepository, 'findOne').mockResolvedValue(mockUserSite);
-      jest
-        .spyOn(userSiteRepository, 'update')
-        .mockResolvedValue({ affected: 1 } as any);
+      jest.spyOn(userSiteRepository, 'update').mockResolvedValue({ affected: 1 } as any);
       jest.spyOn(jwtService, 'sign').mockReturnValue('invite-token');
 
       await service.inviteUser(1, 1);

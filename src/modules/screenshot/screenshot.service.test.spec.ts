@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ScreenshotService, SCREENSHOT_STRATEGY } from './screenshot.service';
-import { ScreenshotStrategy } from './strategies/screenshot-strategy.interface';
+
 import { Comment } from '../comment/comment.entity';
-import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
+import { SCREENSHOT_STRATEGY, ScreenshotService } from './screenshot.service';
+import { ScreenshotStrategy } from './strategies/screenshot-strategy.interface';
 
 describe('ScreenshotService', () => {
   let service: ScreenshotService;
@@ -41,28 +42,29 @@ describe('ScreenshotService', () => {
     comments: [],
   } as Site;
 
-  const createMockComment = (overrides?: Partial<Comment>): Comment => ({
-    id: 1,
-    uniqid: 'test123',
-    message: 'Test comment',
-    user_id: 1,
-    site_id: 1,
-    url: 'https://test.com/page',
-    details: null,
-    reference: null,
-    resolved: false,
-    screenshot: null,
-    created: new Date(),
-    updated: new Date(),
-    user: mockUser,
-    site: mockSite,
-    replies: [],
-    views: [],
-    get viewed() {
-      return null;
-    },
-    ...overrides,
-  } as Comment);
+  const createMockComment = (overrides?: Partial<Comment>): Comment =>
+    ({
+      id: 1,
+      uniqid: 'test123',
+      message: 'Test comment',
+      user_id: 1,
+      site_id: 1,
+      url: 'https://test.com/page',
+      details: null,
+      reference: null,
+      resolved: false,
+      screenshot: null,
+      created: new Date(),
+      updated: new Date(),
+      user: mockUser,
+      site: mockSite,
+      replies: [],
+      views: [],
+      get viewed() {
+        return null;
+      },
+      ...overrides,
+    }) as Comment;
 
   beforeEach(async () => {
     // Create mock strategy
@@ -210,9 +212,9 @@ describe('ScreenshotService', () => {
     });
 
     it('should handle different uniqids', () => {
-      const mockComment = createMockComment({ 
+      const mockComment = createMockComment({
         uniqid: 'different123',
-        screenshot: 'different123.png' 
+        screenshot: 'different123.png',
       });
       const expectedUrl = 'https://example.com/screenshots/different123.png';
 
@@ -230,9 +232,9 @@ describe('ScreenshotService', () => {
         id: 2,
         domain: 'another.com',
       } as Site;
-      const mockComment = createMockComment({ 
+      const mockComment = createMockComment({
         site: differentSite,
-        screenshot: 'test123.png' 
+        screenshot: 'test123.png',
       });
       const expectedUrl = 'https://another.com/screenshots/test123.png';
 
@@ -367,9 +369,7 @@ describe('ScreenshotService', () => {
         mockStrategy.save.mockResolvedValueOnce(op.expectedPath);
       });
 
-      const results = await Promise.all(
-        operations.map((op) => service.save(op.file, op.comment)),
-      );
+      const results = await Promise.all(operations.map((op) => service.save(op.file, op.comment)));
 
       expect(mockStrategy.save).toHaveBeenCalledTimes(5);
       results.forEach((result, index) => {

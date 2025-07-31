@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationService } from './notification.service';
-import { Comment, COMMENT_PREFIX } from '../comment/comment.entity';
+
+import { COMMENT_PREFIX, Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
-import { User } from '../user/user.entity';
 import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
+import { NotificationService } from './notification.service';
 
 export interface CommentCreatedEvent {
   comment: Comment;
@@ -54,14 +55,7 @@ export class NotificationListener {
     const url = `${site.url}${comment.url}#${COMMENT_PREFIX}${comment.uniqid}`;
 
     for (const username of mentions) {
-      await this.notificationService.sendMentionNotification(
-        username,
-        reply.user,
-        site,
-        reply.message,
-        url,
-        'reply',
-      );
+      await this.notificationService.sendMentionNotification(username, reply.user, site, reply.message, url, 'reply');
     }
   }
 
@@ -69,10 +63,6 @@ export class NotificationListener {
   async handleUserInvited(event: UserInvitedEvent): Promise<void> {
     const { user, site, invite_token } = event;
 
-    await this.notificationService.sendInviteNotification(
-      user,
-      site,
-      invite_token,
-    );
+    await this.notificationService.sendInviteNotification(user, site, invite_token);
   }
 }

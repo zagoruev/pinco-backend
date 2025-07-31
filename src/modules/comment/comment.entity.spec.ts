@@ -1,6 +1,7 @@
-import { Comment, COMMENT_PREFIX } from './comment.entity';
-import { CommentView } from './comment-view.entity';
 import { plainToInstance } from 'class-transformer';
+
+import { CommentView } from './comment-view.entity';
+import { COMMENT_PREFIX, Comment } from './comment.entity';
 
 describe('Comment Entity', () => {
   describe('Comment Prefix', () => {
@@ -169,11 +170,13 @@ describe('Comment Entity', () => {
         reference: null,
         details: null,
         screenshot: null,
-        views: [{
-          user_id: 1,
-          comment_id: 1,
-          viewed: viewedDate,
-        }],
+        views: [
+          {
+            user_id: 1,
+            comment_id: 1,
+            viewed: viewedDate,
+          },
+        ],
       };
 
       const transformed = plainToInstance(Comment, plainComment, { groups: ['widget'] });

@@ -1,15 +1,16 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { User } from '../user/user.entity';
-import { Comment } from '../comment/comment.entity';
 import { Exclude, Transform } from 'class-transformer';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+import { Comment } from '../comment/comment.entity';
+import { User } from '../user/user.entity';
 
 @Entity('replies')
 export class Reply {
@@ -26,19 +27,11 @@ export class Reply {
   message: string;
 
   @CreateDateColumn()
-  @Transform(
-    ({ value }: { value: Date }) =>
-      value.toISOString().slice(0, 19).replace('T', ' '),
-    { groups: ['widget'] },
-  )
+  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
   created: Date;
 
   @UpdateDateColumn()
-  @Transform(
-    ({ value }: { value: Date }) =>
-      value.toISOString().slice(0, 19).replace('T', ' '),
-    { groups: ['widget'] },
-  )
+  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
   updated: Date;
 
   @Exclude()

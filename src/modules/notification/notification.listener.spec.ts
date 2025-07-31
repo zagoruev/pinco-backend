@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { Comment } from '../comment/comment.entity';
+import { COMMENT_PREFIX } from '../comment/comment.entity';
+import { Reply } from '../reply/reply.entity';
+import { Site } from '../site/site.entity';
+import { User, UserRole } from '../user/user.entity';
 import { NotificationListener } from './notification.listener';
 import { NotificationService } from './notification.service';
-import { User, UserRole } from '../user/user.entity';
-import { Site } from '../site/site.entity';
-import { Comment } from '../comment/comment.entity';
-import { Reply } from '../reply/reply.entity';
-import { COMMENT_PREFIX } from '../comment/comment.entity';
 
 describe('NotificationListener', () => {
   let listener: NotificationListener;
@@ -111,21 +112,15 @@ describe('NotificationListener', () => {
 
   describe('handleCommentCreated', () => {
     it('should send notifications for all mentions', async () => {
-      jest
-        .spyOn(notificationService, 'extractMentions')
-        .mockReturnValue(['mentioned1', 'mentioned2']);
+      jest.spyOn(notificationService, 'extractMentions').mockReturnValue(['mentioned1', 'mentioned2']);
 
       await listener.handleCommentCreated({
         comment: mockComment,
         site: mockSite,
       });
 
-      expect(notificationService.extractMentions).toHaveBeenCalledWith(
-        mockComment.message,
-      );
-      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(
-        2,
-      );
+      expect(notificationService.extractMentions).toHaveBeenCalledWith(mockComment.message);
+      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(2);
       expect(notificationService.sendMentionNotification).toHaveBeenCalledWith(
         'mentioned1',
         mockComment.user,
@@ -152,17 +147,13 @@ describe('NotificationListener', () => {
         site: mockSite,
       });
 
-      expect(
-        notificationService.sendMentionNotification,
-      ).not.toHaveBeenCalled();
+      expect(notificationService.sendMentionNotification).not.toHaveBeenCalled();
     });
   });
 
   describe('handleReplyCreated', () => {
     it('should send notifications for mentions in reply', async () => {
-      jest
-        .spyOn(notificationService, 'extractMentions')
-        .mockReturnValue(['anotheruser']);
+      jest.spyOn(notificationService, 'extractMentions').mockReturnValue(['anotheruser']);
 
       await listener.handleReplyCreated({
         reply: mockReply,
@@ -170,9 +161,7 @@ describe('NotificationListener', () => {
         site: mockSite,
       });
 
-      expect(notificationService.extractMentions).toHaveBeenCalledWith(
-        mockReply.message,
-      );
+      expect(notificationService.extractMentions).toHaveBeenCalledWith(mockReply.message);
       expect(notificationService.sendMentionNotification).toHaveBeenCalledWith(
         'anotheruser',
         mockReply.user,
@@ -184,9 +173,7 @@ describe('NotificationListener', () => {
     });
 
     it('should only notify mentioned users in reply', async () => {
-      jest
-        .spyOn(notificationService, 'extractMentions')
-        .mockReturnValue(['anotheruser']);
+      jest.spyOn(notificationService, 'extractMentions').mockReturnValue(['anotheruser']);
 
       await listener.handleReplyCreated({
         reply: mockReply,
@@ -195,9 +182,7 @@ describe('NotificationListener', () => {
       });
 
       // Should only notify mentioned users, not comment author
-      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(
-        1,
-      );
+      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(1);
       expect(notificationService.sendMentionNotification).toHaveBeenCalledWith(
         'anotheruser',
         mockReply.user,
@@ -209,9 +194,7 @@ describe('NotificationListener', () => {
     });
 
     it('should not double-notify comment author if mentioned', async () => {
-      jest
-        .spyOn(notificationService, 'extractMentions')
-        .mockReturnValue(['testuser']);
+      jest.spyOn(notificationService, 'extractMentions').mockReturnValue(['testuser']);
 
       await listener.handleReplyCreated({
         reply: mockReply,
@@ -220,9 +203,7 @@ describe('NotificationListener', () => {
       });
 
       // Should only notify once
-      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(
-        1,
-      );
+      expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(1);
     });
 
     it('should not notify anyone if no mentions in reply', async () => {
@@ -235,9 +216,7 @@ describe('NotificationListener', () => {
       });
 
       // Should not notify anyone
-      expect(
-        notificationService.sendMentionNotification,
-      ).not.toHaveBeenCalled();
+      expect(notificationService.sendMentionNotification).not.toHaveBeenCalled();
     });
   });
 
@@ -251,11 +230,7 @@ describe('NotificationListener', () => {
         invite_token: secretToken,
       });
 
-      expect(notificationService.sendInviteNotification).toHaveBeenCalledWith(
-        mockUser,
-        mockSite,
-        secretToken,
-      );
+      expect(notificationService.sendInviteNotification).toHaveBeenCalledWith(mockUser, mockSite, secretToken);
     });
   });
 });

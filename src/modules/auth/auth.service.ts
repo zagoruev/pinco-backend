@@ -1,14 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Response } from 'express';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
-import { User, UserRole } from '../user/user.entity';
-import { TokenService } from './token.service';
-import { LoginDto } from './dto/login.dto';
-import { UserSiteService } from '../user/user-site.service';
-import { Site } from '../site/site.entity';
+import { Response } from 'express';
+import { Repository } from 'typeorm';
+
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
+import { UserSiteService } from '../user/user-site.service';
+import { User, UserRole } from '../user/user.entity';
+import { LoginDto } from './dto/login.dto';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class AuthService {
@@ -35,9 +37,7 @@ export class AuthService {
     }
 
     const allowedRoles = [UserRole.ROOT, UserRole.ADMIN];
-    const hasAllowedRole = user.roles.some((role) =>
-      allowedRoles.includes(role),
-    );
+    const hasAllowedRole = user.roles.some((role) => allowedRoles.includes(role));
 
     if (!hasAllowedRole) {
       return null;
@@ -57,11 +57,8 @@ export class AuthService {
     return { token, user };
   }
 
-  async loginWithInvite(
-    invite: string,
-  ): Promise<{ token: string; user: User; site: Site }> {
-    const { user, userSite } =
-      await this.userSiteService.validateInviteToken(invite);
+  async loginWithInvite(invite: string): Promise<{ token: string; user: User; site: Site }> {
+    const { user, userSite } = await this.userSiteService.validateInviteToken(invite);
 
     if (!user) {
       throw new UnauthorizedException('Invalid or expired invite token');

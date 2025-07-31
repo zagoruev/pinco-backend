@@ -1,23 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
 import * as cookieSignature from 'cookie-signature';
-import { ConfigModule } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import * as request from 'supertest';
 import { Repository } from 'typeorm';
+
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { AuthModule } from '../src/modules/auth/auth.module';
-import { CommentModule } from '../src/modules/comment/comment.module';
-import { ScreenshotModule } from '../src/modules/screenshot/screenshot.module';
-import { Comment } from '../src/modules/comment/comment.entity';
-import { CommentView } from '../src/modules/comment/comment-view.entity';
-import { Reply } from '../src/modules/reply/reply.entity';
-import { Site } from '../src/modules/site/site.entity';
-import { User, UserRole } from '../src/modules/user/user.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
 import { TokenService } from '../src/modules/auth/token.service';
+import { CommentView } from '../src/modules/comment/comment-view.entity';
+import { Comment } from '../src/modules/comment/comment.entity';
+import { CommentModule } from '../src/modules/comment/comment.module';
+import { Reply } from '../src/modules/reply/reply.entity';
+import { ScreenshotModule } from '../src/modules/screenshot/screenshot.module';
 import { ScreenshotService } from '../src/modules/screenshot/screenshot.service';
+import { Site } from '../src/modules/site/site.entity';
+import { UserSite } from '../src/modules/user/user-site.entity';
+import { User, UserRole } from '../src/modules/user/user.entity';
 
 describe('CommentController (e2e)', () => {
   let app: INestApplication;
@@ -140,12 +142,8 @@ describe('CommentController (e2e)', () => {
       .useValue({})
       .compile();
 
-    commentRepository = moduleFixture.get<Repository<Comment>>(
-      getRepositoryToken(Comment),
-    );
-    siteRepository = moduleFixture.get<Repository<Site>>(
-      getRepositoryToken(Site),
-    );
+    commentRepository = moduleFixture.get<Repository<Comment>>(getRepositoryToken(Comment));
+    siteRepository = moduleFixture.get<Repository<Site>>(getRepositoryToken(Site));
     tokenService = moduleFixture.get<TokenService>(TokenService);
     screenshotService = moduleFixture.get<ScreenshotService>(ScreenshotService);
 
@@ -189,10 +187,7 @@ describe('CommentController (e2e)', () => {
     });
 
     it('should return 401 without auth', () => {
-      return request(app.getHttpServer())
-        .get('/api/v1/comments')
-        .set('Origin', 'https://test.com')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/v1/comments').set('Origin', 'https://test.com').expect(401);
     });
 
     it('should return 403 without origin', () => {
@@ -214,9 +209,7 @@ describe('CommentController (e2e)', () => {
       };
 
       jest.spyOn(commentRepository, 'save').mockResolvedValueOnce(mockComment);
-      jest
-        .spyOn(commentRepository, 'findOne')
-        .mockResolvedValueOnce(mockComment);
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValueOnce(mockComment);
 
       return request(app.getHttpServer())
         .post('/api/v1/comments')
@@ -235,12 +228,8 @@ describe('CommentController (e2e)', () => {
     it('should handle screenshot upload', () => {
       const signedToken = cookieSignature.sign(userToken, 'test-secret');
 
-      jest
-        .spyOn(screenshotService, 'save')
-        .mockResolvedValueOnce('abc123def4567.jpg');
-      jest
-        .spyOn(screenshotService, 'getUrl')
-        .mockReturnValue('http://localhost:3000/screenshots/abc123def4567.jpg');
+      jest.spyOn(screenshotService, 'save').mockResolvedValueOnce('abc123def4567.jpg');
+      jest.spyOn(screenshotService, 'getUrl').mockReturnValue('http://localhost:3000/screenshots/abc123def4567.jpg');
 
       return request(app.getHttpServer())
         .post('/api/v1/comments')

@@ -1,12 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OriginGuard } from './origin.guard';
+
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+
 import { Site } from '../../modules/site/site.entity';
-import { User } from '../../modules/user/user.entity';
 import { UserSite, UserSiteRole } from '../../modules/user/user-site.entity';
+import { User } from '../../modules/user/user.entity';
 import { RequestUser } from '../../types/express';
+import { OriginGuard } from './origin.guard';
 
 describe('OriginGuard', () => {
   let guard: OriginGuard;
@@ -66,10 +68,7 @@ describe('OriginGuard', () => {
     findOne: jest.fn(),
   };
 
-  const createMockExecutionContext = (
-    origin: string,
-    user?: RequestUser,
-  ): ExecutionContext => {
+  const createMockExecutionContext = (origin: string, user?: RequestUser): ExecutionContext => {
     const mockRequest = {
       headers: {
         origin: origin || undefined,
@@ -124,10 +123,7 @@ describe('OriginGuard', () => {
     });
 
     it('should extract domain from origin URL', async () => {
-      const context = createMockExecutionContext(
-        'https://subdomain.test.com:8080/path',
-        mockRequestUser,
-      );
+      const context = createMockExecutionContext('https://subdomain.test.com:8080/path', mockRequestUser);
 
       mockSiteRepository.findOne.mockResolvedValue(mockSite);
 
@@ -142,12 +138,8 @@ describe('OriginGuard', () => {
     it('should throw ForbiddenException when origin header missing', async () => {
       const context = createMockExecutionContext('');
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        ForbiddenException,
-      );
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        'Origin not provided',
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+      await expect(guard.canActivate(context)).rejects.toThrow('Origin not provided');
     });
 
     it('should throw ForbiddenException when site not found', async () => {
@@ -155,12 +147,8 @@ describe('OriginGuard', () => {
 
       mockSiteRepository.findOne.mockResolvedValue(null);
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        ForbiddenException,
-      );
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        'Invalid or inactive site',
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+      await expect(guard.canActivate(context)).rejects.toThrow('Invalid or inactive site');
     });
 
     it('should throw ForbiddenException for inactive site', async () => {
@@ -169,9 +157,7 @@ describe('OriginGuard', () => {
       // Inactive sites won't be found because query includes active: true
       mockSiteRepository.findOne.mockResolvedValue(null);
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        new ForbiddenException('Invalid or inactive site'),
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(new ForbiddenException('Invalid or inactive site'));
     });
 
     it('should throw ForbiddenException when authenticated user not associated with site', async () => {
@@ -179,26 +165,16 @@ describe('OriginGuard', () => {
         ...mockRequestUser,
         sites: [],
       };
-      const context = createMockExecutionContext(
-        'https://test.com',
-        userWithoutSite,
-      );
+      const context = createMockExecutionContext('https://test.com', userWithoutSite);
 
       mockSiteRepository.findOne.mockResolvedValue(mockSite);
 
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        ForbiddenException,
-      );
-      await expect(guard.canActivate(context)).rejects.toThrow(
-        'User does not have access to this site',
-      );
+      await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+      await expect(guard.canActivate(context)).rejects.toThrow('User does not have access to this site');
     });
 
     it('should allow authenticated user associated with site', async () => {
-      const context = createMockExecutionContext(
-        'https://test.com',
-        mockRequestUser,
-      );
+      const context = createMockExecutionContext('https://test.com', mockRequestUser);
 
       mockSiteRepository.findOne.mockResolvedValue(mockSite);
 
@@ -218,10 +194,7 @@ describe('OriginGuard', () => {
     });
 
     it('should handle origin with trailing slash', async () => {
-      const context = createMockExecutionContext(
-        'https://test.com/',
-        mockRequestUser,
-      );
+      const context = createMockExecutionContext('https://test.com/', mockRequestUser);
 
       mockSiteRepository.findOne.mockResolvedValue(mockSite);
 
@@ -234,10 +207,7 @@ describe('OriginGuard', () => {
     });
 
     it('should handle origin with www prefix', async () => {
-      const context = createMockExecutionContext(
-        'https://www.test.com',
-        mockRequestUser,
-      );
+      const context = createMockExecutionContext('https://www.test.com', mockRequestUser);
 
       mockSiteRepository.findOne.mockResolvedValue(mockSite);
 

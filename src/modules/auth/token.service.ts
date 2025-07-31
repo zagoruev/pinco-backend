@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../user/user.entity';
+
 import { AppConfigService } from '../config/config.service';
+import { User } from '../user/user.entity';
 
 export interface TokenPayload {
   id: number;

@@ -1,11 +1,13 @@
+import { Repository } from 'typeorm';
+
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConflictException } from '@nestjs/common';
-import { SiteService } from './site.service';
-import { Site } from './site.entity';
-import { User } from '../user/user.entity';
+
 import { UserSite } from '../user/user-site.entity';
+import { User } from '../user/user.entity';
+import { Site } from './site.entity';
+import { SiteService } from './site.service';
 
 describe('SiteService', () => {
   let service: SiteService;
@@ -57,9 +59,7 @@ describe('SiteService', () => {
     service = module.get<SiteService>(SiteService);
     repository = module.get<Repository<Site>>(getRepositoryToken(Site));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    userSiteRepository = module.get<Repository<UserSite>>(
-      getRepositoryToken(UserSite),
-    );
+    userSiteRepository = module.get<Repository<UserSite>>(getRepositoryToken(UserSite));
   });
 
   describe('create', () => {
@@ -97,9 +97,7 @@ describe('SiteService', () => {
 
       jest.spyOn(repository, 'findOne').mockResolvedValue(mockSite);
 
-      await expect(service.create(createDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -146,9 +144,7 @@ describe('SiteService', () => {
 
       jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
-      jest
-        .spyOn(repository, 'save')
-        .mockResolvedValue({ ...mockSite, domain: 'new-domain.com' });
+      jest.spyOn(repository, 'save').mockResolvedValue({ ...mockSite, domain: 'new-domain.com' });
 
       await service.update(1, updateDto);
 
@@ -164,9 +160,7 @@ describe('SiteService', () => {
       jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'findOne').mockResolvedValue(existingSite);
 
-      await expect(service.update(1, updateDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.update(1, updateDto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -184,9 +178,7 @@ describe('SiteService', () => {
     });
 
     it('should throw error if site not found', async () => {
-      jest
-        .spyOn(repository, 'findOneOrFail')
-        .mockRejectedValue(new Error('Entity not found'));
+      jest.spyOn(repository, 'findOneOrFail').mockRejectedValue(new Error('Entity not found'));
 
       await expect(service.remove(999)).rejects.toThrow('Entity not found');
     });

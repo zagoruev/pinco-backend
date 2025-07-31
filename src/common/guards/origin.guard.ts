@@ -1,12 +1,9 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Request } from 'express';
+import { Repository } from 'typeorm';
+
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { Site } from '../../modules/site/site.entity';
 import { UserSiteRole } from '../../modules/user/user-site.entity';
 
@@ -38,9 +35,7 @@ export class OriginGuard implements CanActivate {
     }
 
     const canAccessSite = user?.sites.some(
-      (userSite) =>
-        userSite.site_id === site.id &&
-        userSite.roles.includes(UserSiteRole.COLLABORATOR),
+      (userSite) => userSite.site_id === site.id && userSite.roles.includes(UserSiteRole.COLLABORATOR),
     );
 
     if (!canAccessSite) {

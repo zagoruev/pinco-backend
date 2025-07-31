@@ -1,19 +1,20 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
+import { OriginGuard } from '../../common/guards/origin.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { AppConfigModule } from '../config/config.module';
+import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
+import { SiteModule } from '../site/site.module';
+import { UserSite } from '../user/user-site.entity';
+import { User } from '../user/user.entity';
+import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
-import { User } from '../user/user.entity';
-import { UserSite } from '../user/user-site.entity';
-import { Site } from '../site/site.entity';
-import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { OriginGuard } from '../../common/guards/origin.guard';
-import { SiteModule } from '../site/site.module';
-import { UserModule } from '../user/user.module';
-import { AppConfigService } from '../config/config.service';
-import { AppConfigModule } from '../config/config.module';
 
 @Global()
 @Module({
@@ -33,13 +34,7 @@ import { AppConfigModule } from '../config/config.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    TokenService,
-    CookieAuthGuard,
-    RolesGuard,
-    OriginGuard,
-  ],
+  providers: [AuthService, TokenService, CookieAuthGuard, RolesGuard, OriginGuard],
   exports: [TokenService, CookieAuthGuard, RolesGuard, OriginGuard],
 })
 export class AuthModule {}

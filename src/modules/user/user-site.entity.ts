@@ -1,14 +1,7 @@
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { User } from './user.entity';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+
 import { Site } from '../site/site.entity';
+import { User } from './user.entity';
 
 export enum UserSiteRole {
   ADMIN = 'ADMIN',

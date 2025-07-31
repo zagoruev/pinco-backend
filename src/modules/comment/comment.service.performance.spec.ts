@@ -1,12 +1,13 @@
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CommentService } from './comment.service';
-import { Comment } from './comment.entity';
-import { CommentView } from './comment-view.entity';
-import { ScreenshotService } from '../screenshot/screenshot.service';
-import { ReplyService } from '../reply/reply.service';
+
 import { createComment, createSite } from '../../../test/fixtures/builders';
+import { ReplyService } from '../reply/reply.service';
+import { ScreenshotService } from '../screenshot/screenshot.service';
+import { CommentView } from './comment-view.entity';
+import { Comment } from './comment.entity';
+import { CommentService } from './comment.service';
 
 describe('CommentService - Performance', () => {
   let service: CommentService;
@@ -29,9 +30,7 @@ describe('CommentService - Performance', () => {
         {
           provide: ScreenshotService,
           useValue: {
-            getUrl: jest
-              .fn()
-              .mockReturnValue('http://example.com/screenshot.png'),
+            getUrl: jest.fn().mockReturnValue('http://example.com/screenshot.png'),
           },
         },
         {
@@ -53,9 +52,7 @@ describe('CommentService - Performance', () => {
     it('should handle findAll with 1000+ comments efficiently', async () => {
       const mockComments = Array(1000)
         .fill(null)
-        .map((_, i) =>
-          createComment({ id: i + 1, message: `Comment ${i + 1}` }),
-        );
+        .map((_, i) => createComment({ id: i + 1, message: `Comment ${i + 1}` }));
 
       const queryBuilder = {
         leftJoin: jest.fn().mockReturnThis(),
@@ -101,14 +98,8 @@ describe('CommentService - Performance', () => {
       });
 
       // Verify efficient query construction
-      expect(queryBuilder.where).toHaveBeenCalledWith(
-        'comment.site_id = :siteId',
-        { siteId: 1 },
-      );
-      expect(queryBuilder.orderBy).toHaveBeenCalledWith(
-        'comment.created',
-        'DESC',
-      );
+      expect(queryBuilder.where).toHaveBeenCalledWith('comment.site_id = :siteId', { siteId: 1 });
+      expect(queryBuilder.orderBy).toHaveBeenCalledWith('comment.created', 'DESC');
     });
   });
 

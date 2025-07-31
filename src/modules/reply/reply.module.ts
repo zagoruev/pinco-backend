@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Reply } from './reply.entity';
+
 import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
-import { ReplyService } from './reply.service';
-import { ReplyController } from './reply.controller';
 import { SiteModule } from '../site/site.module';
+import { ReplyController } from './reply.controller';
+import { Reply } from './reply.entity';
+import { ReplyService } from './reply.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Reply, Comment, Site]), SiteModule],

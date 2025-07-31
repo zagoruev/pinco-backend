@@ -1,11 +1,8 @@
-import { User, UserRole } from '../../src/modules/user/user.entity';
-import { Site } from '../../src/modules/site/site.entity';
 import { Comment } from '../../src/modules/comment/comment.entity';
 import { Reply } from '../../src/modules/reply/reply.entity';
-import {
-  UserSite,
-  UserSiteRole,
-} from '../../src/modules/user/user-site.entity';
+import { Site } from '../../src/modules/site/site.entity';
+import { UserSite, UserSiteRole } from '../../src/modules/user/user-site.entity';
+import { User, UserRole } from '../../src/modules/user/user.entity';
 
 export class UserBuilder {
   private user: Partial<User> = {
@@ -150,14 +147,10 @@ export class CommentBuilder {
 }
 
 // Factory functions for quick creation
-export const createUser = (overrides?: Partial<User>) =>
-  new UserBuilder().build();
+export const createUser = (overrides?: Partial<User>) => new UserBuilder().build();
 
-export const createAdminUser = (overrides?: Partial<User>) =>
-  new UserBuilder().asAdmin().build();
+export const createAdminUser = (overrides?: Partial<User>) => new UserBuilder().asAdmin().build();
 
-export const createSite = (overrides?: Partial<Site>) =>
-  new SiteBuilder().build();
+export const createSite = (overrides?: Partial<Site>) => new SiteBuilder().build();
 
-export const createComment = (overrides?: Partial<Comment>) =>
-  new CommentBuilder().build();
+export const createComment = (overrides?: Partial<Comment>) => new CommentBuilder().build();

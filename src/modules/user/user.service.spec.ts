@@ -1,21 +1,18 @@
+import * as argon2 from 'argon2';
+import { Repository } from 'typeorm';
+
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import {
-  NotFoundException,
-  ConflictException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
-import * as argon2 from 'argon2';
-import { UserService } from './user.service';
-import { User, UserRole } from './user.entity';
-import { UserSite } from './user-site.entity';
-import { Site } from '../site/site.entity';
-import { UserSiteService } from './user-site.service';
-import { UserSiteRole } from './user-site.entity';
+
 import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
+import { UserSite } from './user-site.entity';
+import { UserSiteRole } from './user-site.entity';
+import { UserSiteService } from './user-site.service';
+import { User, UserRole } from './user.entity';
+import { UserService } from './user.service';
 
 jest.mock('argon2');
 
@@ -81,11 +78,7 @@ describe('UserService', () => {
             create: jest.fn(),
             save: jest
               .fn()
-              .mockImplementation((entities) =>
-                Promise.resolve(
-                  Array.isArray(entities) ? entities : [entities],
-                ),
-              ),
+              .mockImplementation((entities) => Promise.resolve(Array.isArray(entities) ? entities : [entities])),
             find: jest.fn(),
             delete: jest.fn(),
           },
@@ -107,9 +100,7 @@ describe('UserService', () => {
 
     service = module.get<UserService>(UserService);
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    userSiteRepository = module.get<Repository<UserSite>>(
-      getRepositoryToken(UserSite),
-    );
+    userSiteRepository = module.get<Repository<UserSite>>(getRepositoryToken(UserSite));
     userSiteService = module.get<UserSiteService>(UserSiteService);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
@@ -132,12 +123,8 @@ describe('UserService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(userRepository, 'create').mockReturnValue(mockUser);
       jest.spyOn(userRepository, 'save').mockResolvedValue(mockUser);
-      jest
-        .spyOn(userSiteRepository, 'create')
-        .mockImplementation((data) => data as UserSite);
-      jest
-        .spyOn(userSiteRepository, 'find')
-        .mockResolvedValue([{ user_id: 1, site_id: 1 } as UserSite]);
+      jest.spyOn(userSiteRepository, 'create').mockImplementation((data) => data as UserSite);
+      jest.spyOn(userSiteRepository, 'find').mockResolvedValue([{ user_id: 1, site_id: 1 } as UserSite]);
       (argon2.hash as jest.Mock).mockResolvedValue('hashed-password');
 
       const result = await service.create(createDto);
@@ -150,9 +137,7 @@ describe('UserService', () => {
     it('should throw ConflictException if email already exists', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
 
-      await expect(service.create(createDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if username already exists', async () => {
@@ -163,13 +148,9 @@ describe('UserService', () => {
           return '#4C53F1';
         },
       } as User;
-      jest
-        .spyOn(userRepository, 'findOne')
-        .mockResolvedValue(userWithSameUsername);
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(userWithSameUsername);
 
-      await expect(service.create(createDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException with specific message for email conflict', async () => {
@@ -180,9 +161,7 @@ describe('UserService', () => {
       } as User;
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(existingUser);
 
-      await expect(service.create(createDto)).rejects.toThrow(
-        'User with this email already exists',
-      );
+      await expect(service.create(createDto)).rejects.toThrow('User with this email already exists');
     });
   });
 
@@ -193,17 +172,12 @@ describe('UserService', () => {
         andWhere: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([mockUser]),
       };
-      jest
-        .spyOn(userRepository, 'createQueryBuilder')
-        .mockReturnValue(queryBuilder as any);
+      jest.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(queryBuilder as any);
 
       const result = await service.findAll(mockAdminUser, 1);
 
       expect(result).toEqual([mockUser]);
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-        'userSite.site_id = :siteId',
-        { siteId: 1 },
-      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith('userSite.site_id = :siteId', { siteId: 1 });
     });
   });
 
@@ -214,21 +188,13 @@ describe('UserService', () => {
         andWhere: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([mockUser]),
       };
-      jest
-        .spyOn(userRepository, 'createQueryBuilder')
-        .mockReturnValue(queryBuilder as any);
+      jest.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(queryBuilder as any);
 
       const result = await service.listUsers(mockAdminUser);
 
       expect(result).toEqual([mockUser]);
-      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'user.sites',
-        'userSite',
-      );
-      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'userSite.site',
-        'site',
-      );
+      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('user.sites', 'userSite');
+      expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('userSite.site', 'site');
     });
 
     it('should filter by site when siteId is provided', async () => {
@@ -237,17 +203,12 @@ describe('UserService', () => {
         andWhere: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([mockUser]),
       };
-      jest
-        .spyOn(userRepository, 'createQueryBuilder')
-        .mockReturnValue(queryBuilder as any);
+      jest.spyOn(userRepository, 'createQueryBuilder').mockReturnValue(queryBuilder as any);
 
       const result = await service.listUsers(mockAdminUser, 1);
 
       expect(result).toEqual([mockUser]);
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-        'userSite.site_id = :siteId',
-        { siteId: 1 },
-      );
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith('userSite.site_id = :siteId', { siteId: 1 });
     });
   });
 
@@ -268,9 +229,7 @@ describe('UserService', () => {
     it('should throw NotFoundException if user not found', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne(999, mockAdminUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(999, mockAdminUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException for site owner without access', async () => {
@@ -285,20 +244,16 @@ describe('UserService', () => {
 
       jest.clearAllMocks();
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(regularUser);
-      jest
-        .spyOn(userSiteRepository, 'find')
-        .mockImplementation((options: any) => {
-          if (options.where.user_id === 2) {
-            return Promise.resolve([{ user_id: 2, site_id: 1 } as UserSite]);
-          } else if (options.where.user_id === 3) {
-            return Promise.resolve([{ user_id: 3, site_id: 2 } as UserSite]);
-          }
-          return Promise.resolve([]);
-        });
+      jest.spyOn(userSiteRepository, 'find').mockImplementation((options: any) => {
+        if (options.where.user_id === 2) {
+          return Promise.resolve([{ user_id: 2, site_id: 1 } as UserSite]);
+        } else if (options.where.user_id === 3) {
+          return Promise.resolve([{ user_id: 3, site_id: 2 } as UserSite]);
+        }
+        return Promise.resolve([]);
+      });
 
-      await expect(service.findOne(3, mockSiteOwnerUser)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.findOne(3, mockSiteOwnerUser)).rejects.toThrow(ForbiddenException);
     });
 
     it('should check site owner access when user has ADMIN site role but not global ADMIN', async () => {
@@ -321,13 +276,9 @@ describe('UserService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(targetUser);
 
       // Mock checkSiteOwnerUserAccess to return false (no access)
-      jest
-        .spyOn(service as any, 'checkSiteOwnerUserAccess')
-        .mockResolvedValue(false);
+      jest.spyOn(service as any, 'checkSiteOwnerUserAccess').mockResolvedValue(false);
 
-      await expect(service.findOne(5, siteAdminUser)).rejects.toThrow(
-        'You do not have access to this user',
-      );
+      await expect(service.findOne(5, siteAdminUser)).rejects.toThrow('You do not have access to this user');
     });
 
     it('should allow site admin access when users share a site', async () => {
@@ -350,9 +301,7 @@ describe('UserService', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(targetUser);
 
       // Mock checkSiteOwnerUserAccess to return true (has access)
-      jest
-        .spyOn(service as any, 'checkSiteOwnerUserAccess')
-        .mockResolvedValue(true);
+      jest.spyOn(service as any, 'checkSiteOwnerUserAccess').mockResolvedValue(true);
 
       const result = await service.findOne(5, siteAdminUser);
       expect(result).toEqual(targetUser);
@@ -379,7 +328,6 @@ describe('UserService', () => {
       expect(result).toEqual(updatedUser);
     });
 
-
     it('should throw ConflictException if new email already exists', async () => {
       const updateDto = { email: 'existing@example.com' };
       const existingUser = {
@@ -393,9 +341,7 @@ describe('UserService', () => {
       jest.spyOn(service, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(existingUser);
 
-      await expect(service.update(1, updateDto, mockAdminUser)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.update(1, updateDto, mockAdminUser)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException if new username already exists', async () => {
@@ -420,7 +366,7 @@ describe('UserService', () => {
 
     it('should not check for conflicts if email and username are unchanged', async () => {
       const updateDto = { name: 'New Name' };
-      
+
       jest.spyOn(service, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(userRepository, 'save').mockResolvedValue({
         ...mockUser,
@@ -432,7 +378,6 @@ describe('UserService', () => {
       expect(userRepository.findOne).not.toHaveBeenCalled();
       expect(result.name).toBe('New Name');
     });
-
   });
 
   describe('remove', () => {
@@ -449,9 +394,7 @@ describe('UserService', () => {
     it('should prevent self-deletion', async () => {
       jest.spyOn(service, 'findOne').mockResolvedValue(mockUser);
 
-      await expect(service.remove(1, mockAdminUser)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.remove(1, mockAdminUser)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -486,41 +429,35 @@ describe('UserService', () => {
 
     describe('validateSiteOwnerAccess', () => {
       it('should not throw if owner has access to all sites', async () => {
-        jest.spyOn(userSiteRepository, 'find').mockResolvedValue([
-          { user_id: 1, site_id: 1 } as UserSite,
-          { user_id: 1, site_id: 2 } as UserSite,
-          { user_id: 1, site_id: 3 } as UserSite,
-        ]);
+        jest
+          .spyOn(userSiteRepository, 'find')
+          .mockResolvedValue([
+            { user_id: 1, site_id: 1 } as UserSite,
+            { user_id: 1, site_id: 2 } as UserSite,
+            { user_id: 1, site_id: 3 } as UserSite,
+          ]);
 
         // Should not throw
-        await expect(
-          (service as any).validateSiteOwnerAccess(1, [1, 2])
-        ).resolves.not.toThrow();
+        await expect((service as any).validateSiteOwnerAccess(1, [1, 2])).resolves.not.toThrow();
       });
 
       it('should throw ForbiddenException if owner lacks access to some sites', async () => {
-        jest.spyOn(userSiteRepository, 'find').mockResolvedValue([
-          { user_id: 1, site_id: 1 } as UserSite,
-          { user_id: 1, site_id: 2 } as UserSite,
-        ]);
+        jest
+          .spyOn(userSiteRepository, 'find')
+          .mockResolvedValue([{ user_id: 1, site_id: 1 } as UserSite, { user_id: 1, site_id: 2 } as UserSite]);
 
-        await expect(
-          (service as any).validateSiteOwnerAccess(1, [1, 2, 3])
-        ).rejects.toThrow('You do not have access to one or more of the specified sites');
+        await expect((service as any).validateSiteOwnerAccess(1, [1, 2, 3])).rejects.toThrow(
+          'You do not have access to one or more of the specified sites',
+        );
       });
     });
 
     describe('checkSiteOwnerUserAccess', () => {
       it('should return true if owner and user share at least one site', async () => {
-        jest.spyOn(userSiteRepository, 'find')
-          .mockResolvedValueOnce([
-            { user_id: 1, site_id: 1 } as UserSite,
-            { user_id: 1, site_id: 2 } as UserSite,
-          ])
-          .mockResolvedValueOnce([
-            { user_id: 2, site_id: 2 } as UserSite,
-            { user_id: 2, site_id: 3 } as UserSite,
-          ]);
+        jest
+          .spyOn(userSiteRepository, 'find')
+          .mockResolvedValueOnce([{ user_id: 1, site_id: 1 } as UserSite, { user_id: 1, site_id: 2 } as UserSite])
+          .mockResolvedValueOnce([{ user_id: 2, site_id: 2 } as UserSite, { user_id: 2, site_id: 3 } as UserSite]);
 
         const result = await (service as any).checkSiteOwnerUserAccess(1, 2);
 
@@ -528,15 +465,10 @@ describe('UserService', () => {
       });
 
       it('should return false if owner and user share no sites', async () => {
-        jest.spyOn(userSiteRepository, 'find')
-          .mockResolvedValueOnce([
-            { user_id: 1, site_id: 1 } as UserSite,
-            { user_id: 1, site_id: 2 } as UserSite,
-          ])
-          .mockResolvedValueOnce([
-            { user_id: 2, site_id: 3 } as UserSite,
-            { user_id: 2, site_id: 4 } as UserSite,
-          ]);
+        jest
+          .spyOn(userSiteRepository, 'find')
+          .mockResolvedValueOnce([{ user_id: 1, site_id: 1 } as UserSite, { user_id: 1, site_id: 2 } as UserSite])
+          .mockResolvedValueOnce([{ user_id: 2, site_id: 3 } as UserSite, { user_id: 2, site_id: 4 } as UserSite]);
 
         const result = await (service as any).checkSiteOwnerUserAccess(1, 2);
 
@@ -544,7 +476,8 @@ describe('UserService', () => {
       });
 
       it('should handle users with no sites', async () => {
-        jest.spyOn(userSiteRepository, 'find')
+        jest
+          .spyOn(userSiteRepository, 'find')
           .mockResolvedValueOnce([])
           .mockResolvedValueOnce([{ user_id: 2, site_id: 1 } as UserSite]);
 
@@ -554,5 +487,4 @@ describe('UserService', () => {
       });
     });
   });
-
 });

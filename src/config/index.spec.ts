@@ -1,12 +1,6 @@
 import * as Joi from 'joi';
-import {
-  appConfig,
-  databaseConfig,
-  emailConfig,
-  screenshotConfig,
-  validationSchema,
-  Config,
-} from './index';
+
+import { Config, appConfig, databaseConfig, emailConfig, screenshotConfig, validationSchema } from './index';
 
 // Mock parse-duration
 jest.mock('parse-duration', () => ({

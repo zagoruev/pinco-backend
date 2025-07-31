@@ -1,13 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Reply } from './reply.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { RequestUser } from '../../types/express';
 import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
-import { RequestUser } from '../../types/express';
+import { Reply } from './reply.entity';
 import { isResolveAdded } from './reply.utils';
 
 @Injectable()
@@ -30,11 +32,7 @@ export class ReplyService {
       .getMany();
   }
 
-  async create(
-    createDto: CreateReplyDto,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<Reply> {
+  async create(createDto: CreateReplyDto, site: Site, currentUser: RequestUser): Promise<Reply> {
     const comment = await this.commentRepository.findOneOrFail({
       where: { id: createDto.comment_id, site_id: site.id },
       relations: ['user'],
@@ -77,12 +75,7 @@ export class ReplyService {
     return this.replyRepository.save(reply);
   }
 
-  async update(
-    id: number,
-    updateDto: UpdateReplyDto,
-    site: Site,
-    currentUser: RequestUser,
-  ): Promise<Reply> {
+  async update(id: number, updateDto: UpdateReplyDto, site: Site, currentUser: RequestUser): Promise<Reply> {
     const reply = await this.replyRepository.findOneOrFail({
       where: { id, comment: { site_id: site.id } },
     });

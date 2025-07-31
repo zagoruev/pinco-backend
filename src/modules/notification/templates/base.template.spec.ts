@@ -57,9 +57,7 @@ describe('EmailTemplate', () => {
     it('should escape HTML special characters', () => {
       const text = 'Hello & <world> "test" \'single\'';
       const result = template['escapeHtml'](text);
-      expect(result).toBe(
-        'Hello &amp; &lt;world&gt; &quot;test&quot; &#039;single&#039;',
-      );
+      expect(result).toBe('Hello &amp; &lt;world&gt; &quot;test&quot; &#039;single&#039;');
     });
 
     it('should handle empty string', () => {

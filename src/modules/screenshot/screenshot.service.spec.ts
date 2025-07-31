@@ -1,11 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { LocalScreenshotStrategy } from './strategies/local-screenshot.strategy';
-import { AppConfigService } from '../config/config.service';
+
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { Comment } from '../comment/comment.entity';
-import { User } from '../user/user.entity';
+import { AppConfigService } from '../config/config.service';
 import { Site } from '../site/site.entity';
+import { User } from '../user/user.entity';
+import { LocalScreenshotStrategy } from './strategies/local-screenshot.strategy';
 
 jest.mock('fs/promises');
 
@@ -110,10 +112,7 @@ describe('LocalScreenshotStrategy', () => {
       expect(fs.mkdir).toHaveBeenCalledWith('./test-screenshots', {
         recursive: true,
       });
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        path.join('./test-screenshots', 'test123.png'),
-        file.buffer,
-      );
+      expect(fs.writeFile).toHaveBeenCalledWith(path.join('./test-screenshots', 'test123.png'), file.buffer);
     });
   });
 
@@ -131,9 +130,7 @@ describe('LocalScreenshotStrategy', () => {
 
       await strategy.delete(mockComment);
 
-      expect(fs.unlink).toHaveBeenCalledWith(
-        path.join('./test-screenshots', 'test123.png'),
-      );
+      expect(fs.unlink).toHaveBeenCalledWith(path.join('./test-screenshots', 'test123.png'));
     });
 
     it('should ignore ENOENT errors when file does not exist', async () => {
@@ -151,9 +148,7 @@ describe('LocalScreenshotStrategy', () => {
 
       jest.spyOn(fs, 'unlink').mockRejectedValue(error);
 
-      await expect(strategy.delete(mockComment)).rejects.toThrow(
-        'Permission denied',
-      );
+      await expect(strategy.delete(mockComment)).rejects.toThrow('Permission denied');
     });
   });
 });
