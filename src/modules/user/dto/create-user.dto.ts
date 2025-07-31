@@ -1,13 +1,7 @@
-import {
-  IsEmail,
-  IsString,
-  IsBoolean,
-  IsOptional,
-  IsEnum,
-  IsArray,
-  Length,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Length } from 'class-validator';
+
 import { ApiProperty } from '@nestjs/swagger';
+
 import { UserRole } from '../user.entity';
 
 export class CreateUserDto {
@@ -39,18 +33,4 @@ export class CreateUserDto {
   @IsArray()
   @IsEnum(UserRole, { each: true })
   roles: UserRole[];
-
-  @ApiProperty({ example: [1], isArray: true, required: false })
-  @IsArray()
-  @IsOptional()
-  siteIds?: number[];
-
-  @ApiProperty({
-    example: true,
-    required: false,
-    description: 'Send invite email with secret link',
-  })
-  @IsBoolean()
-  @IsOptional()
-  invite?: boolean;
 }

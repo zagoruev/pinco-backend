@@ -1,35 +1,36 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
+  Post,
   Query,
   SerializeOptions,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserRole } from '../user/user.entity';
-import { RequestUser } from '../../types/express';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
 import { CurrentSite } from '../../common/decorators/current-site.decorator';
-import { Site } from '../site/site.entity';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
-import { UserSiteService } from './user-site.service';
-import { InviteUserDto } from './dto/invite-user.dto';
-import { RevokeInviteDto } from './dto/revoke-invite.dto';
-import { ResendInviteDto } from './dto/resend-invite.dto';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { RequestUser } from '../../types/express';
+import { Site } from '../site/site.entity';
+import { UserRole } from '../user/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteInviteDto } from './dto/delete-invite.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
+import { ResendInviteDto } from './dto/resend-invite.dto';
+import { RevokeInviteDto } from './dto/revoke-invite.dto';
 import { UpdateUserSiteRolesDto } from './dto/update-user-site-roles.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserSiteService } from './user-site.service';
+import { UserService } from './user.service';
 
 @ApiTags('users')
 @Controller('users')
@@ -57,11 +58,8 @@ export class UserController {
     status: 409,
     description: 'User with this email or username already exists',
   })
-  create(
-    @Body() createUserDto: CreateUserDto,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
-    return this.userService.create(createUserDto, currentUser);
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 
   @Get()
@@ -91,10 +89,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return the user' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
-  findOne(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() currentUser: RequestUser) {
     return this.userService.findOne(id, currentUser);
   }
 
@@ -125,10 +120,7 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 403, description: 'Access denied' })
   @ApiResponse({ status: 400, description: 'Cannot delete your own account' })
-  remove(
-    @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() currentUser: RequestUser,
-  ) {
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() currentUser: RequestUser) {
     return this.userService.remove(id, currentUser);
   }
 
@@ -168,10 +160,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Invite deleted successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   deleteInvite(@Body() deleteInviteDto: DeleteInviteDto) {
-    return this.userSiteService.removeUserFromSite(
-      deleteInviteDto.user_id,
-      deleteInviteDto.site_id,
-    );
+    return this.userSiteService.removeUserFromSite(deleteInviteDto.user_id, deleteInviteDto.site_id);
   }
 
   @Post('invite/resend')
@@ -181,10 +170,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Invite resent successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   resendInvite(@Body() resendInviteDto: ResendInviteDto) {
-    return this.userSiteService.inviteUser(
-      resendInviteDto.user_id,
-      resendInviteDto.site_id,
-    );
+    return this.userSiteService.inviteUser(resendInviteDto.user_id, resendInviteDto.site_id);
   }
 
   @Post('invite/revoke')
@@ -194,9 +180,6 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Invite revoked successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
   revokeInvite(@Body() revokeInviteDto: RevokeInviteDto) {
-    return this.userSiteService.revokeInvite(
-      revokeInviteDto.user_id,
-      revokeInviteDto.site_id,
-    );
+    return this.userSiteService.revokeInvite(revokeInviteDto.user_id, revokeInviteDto.site_id);
   }
 }

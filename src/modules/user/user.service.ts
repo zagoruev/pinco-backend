@@ -1,20 +1,20 @@
+import * as argon2 from 'argon2';
+import { Repository } from 'typeorm';
+
 import {
-  Injectable,
-  NotFoundException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
-  BadRequestException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as argon2 from 'argon2';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { User, UserRole } from './user.entity';
-import { UserSite, UserSiteRole } from './user-site.entity';
+
+import { RequestUser } from '../../types/express';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { RequestUser } from '../../types/express';
-import { UserSiteService } from './user-site.service';
+import { UserSite } from './user-site.entity';
+import { User, UserRole } from './user.entity';
 
 @Injectable()
 export class UserService {
@@ -23,20 +23,11 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(UserSite)
     private userSiteRepository: Repository<UserSite>,
-    private userSiteService: UserSiteService,
-    private eventEmitter: EventEmitter2,
   ) {}
 
-  async create(
-    createUserDto: CreateUserDto,
-    currentUser: RequestUser,
-  ): Promise<User> {
-    // Check if email or username already exists
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.userRepository.findOne({
-      where: [
-        { email: createUserDto.email },
-        { username: createUserDto.username },
-      ],
+      where: [{ email: createUserDto.email }, { username: createUserDto.username }],
     });
 
     if (existingUser) {
@@ -46,39 +37,15 @@ export class UserService {
       throw new ConflictException('User with this username already exists');
     }
 
-    // Validate site access for SITE_OWNER
-    if (
-      currentUser.roles.includes(UserSiteRole.ADMIN) &&
-      createUserDto.siteIds
-    ) {
-      await this.validateSiteOwnerAccess(currentUser.id, createUserDto.siteIds);
-    }
-
-    // Hash password
     const hashedPassword = await argon2.hash(createUserDto.password);
 
-    // Create user
     const user = this.userRepository.create({
       ...createUserDto,
       password: hashedPassword,
       active: createUserDto.active ?? true,
     });
 
-    const savedUser = await this.userRepository.save(user);
-
-    // Create user-site relationships
-    if (createUserDto.siteIds && createUserDto.siteIds.length > 0) {
-      const userSites = createUserDto.siteIds.map((siteId) =>
-        this.userSiteRepository.create({
-          user_id: savedUser.id,
-          site_id: siteId,
-          // roles: createUserDto.roles,
-        }),
-      );
-      await this.userSiteRepository.save(userSites);
-    }
-
-    return savedUser;
+    return await this.userRepository.save(user);
   }
 
   async findAll(currentUser: RequestUser, siteId: number): Promise<User[]> {
@@ -112,11 +79,7 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Check access for SITE_OWNER
-    if (
-      currentUser.roles.includes(UserSiteRole.ADMIN) &&
-      !currentUser.roles.includes(UserRole.ADMIN)
-    ) {
+    if (!currentUser.roles.includes(UserRole.ROOT) && currentUser.roles.includes(UserRole.ADMIN)) {
       const hasAccess = await this.checkSiteOwnerUserAccess(currentUser.id, id);
       if (!hasAccess) {
         throw new ForbiddenException('You do not have access to this user');
@@ -126,14 +89,9 @@ export class UserService {
     return user;
   }
 
-  async update(
-    id: number,
-    updateUserDto: UpdateUserDto,
-    currentUser: RequestUser,
-  ): Promise<User> {
+  async update(id: number, updateUserDto: UpdateUserDto, currentUser: RequestUser): Promise<User> {
     const user = await this.findOne(id, currentUser);
 
-    // Check for email/username conflicts
     if (updateUserDto.email && updateUserDto.email !== user.email) {
       const existingUser = await this.userRepository.findOne({
         where: { email: updateUserDto.email },
@@ -152,87 +110,18 @@ export class UserService {
       }
     }
 
-    // Hash password if provided
-    if (updateUserDto.password) {
-      updateUserDto.password = await argon2.hash(updateUserDto.password);
-    }
-
-    // Update user
     Object.assign(user, updateUserDto);
-    const savedUser = await this.userRepository.save(user);
-
-    // Update user-site relationships if provided
-    if (updateUserDto.siteIds !== undefined) {
-      // Validate site access for SITE_OWNER
-      if (
-        currentUser.roles.includes(UserSiteRole.ADMIN) &&
-        !currentUser.roles.includes(UserRole.ADMIN)
-      ) {
-        await this.validateSiteOwnerAccess(
-          currentUser.id,
-          updateUserDto.siteIds,
-        );
-      }
-
-      // Remove existing relationships
-      await this.userSiteRepository.delete({ user_id: id });
-
-      // Create new relationships
-      if (updateUserDto.siteIds.length > 0) {
-        const userSites = updateUserDto.siteIds.map((siteId) =>
-          this.userSiteRepository.create({
-            user_id: id,
-            site_id: siteId,
-            // roles: updateUserDto.roles || user.roles,
-          }),
-        );
-        await this.userSiteRepository.save(userSites);
-      }
-    }
-
-    return savedUser;
+    return await this.userRepository.save(user);
   }
 
   async remove(id: number, currentUser: RequestUser): Promise<void> {
     const user = await this.findOne(id, currentUser);
 
-    // Prevent self-deletion
     if (id === currentUser.id) {
       throw new BadRequestException('You cannot delete your own account');
     }
 
     await this.userRepository.remove(user);
-  }
-
-  async invite(
-    id: number,
-    currentUser: RequestUser,
-  ): Promise<{ secretToken: string }> {
-    const user = await this.findOne(id, currentUser);
-
-    const secretToken = await this.userSiteService.generateInviteToken(id, id);
-
-    // Get the first site the user is associated with for the invite
-    const userSites = await this.userSiteRepository.find({
-      where: { user_id: id },
-      relations: ['site'],
-    });
-
-    if (userSites.length > 0) {
-      // Emit event for email notification
-      this.eventEmitter.emit('user.invited', {
-        user,
-        site: userSites[0].site,
-        secretToken,
-      });
-    }
-
-    return { secretToken };
-  }
-
-  async revokeInvite(id: number, currentUser: RequestUser): Promise<void> {
-    await this.findOne(id, currentUser); // Check access
-    // await this.userSiteService.revokeInvite(id);
   }
 
   private async getUserSites(userId: number): Promise<number[]> {
@@ -242,24 +131,16 @@ export class UserService {
     return userSites.map((us) => us.site_id);
   }
 
-  private async validateSiteOwnerAccess(
-    ownerId: number,
-    siteIds: number[],
-  ): Promise<void> {
+  private async validateSiteOwnerAccess(ownerId: number, siteIds: number[]): Promise<void> {
     const ownerSites = await this.getUserSites(ownerId);
     const hasAccess = siteIds.every((siteId) => ownerSites.includes(siteId));
 
     if (!hasAccess) {
-      throw new ForbiddenException(
-        'You do not have access to one or more of the specified sites',
-      );
+      throw new ForbiddenException('You do not have access to one or more of the specified sites');
     }
   }
 
-  private async checkSiteOwnerUserAccess(
-    ownerId: number,
-    userId: number,
-  ): Promise<boolean> {
+  private async checkSiteOwnerUserAccess(ownerId: number, userId: number): Promise<boolean> {
     const ownerSites = await this.getUserSites(ownerId);
     const userSites = await this.getUserSites(userId);
 

@@ -1,22 +1,17 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
 import { customAlphabet } from 'nanoid';
-import { UserSite, UserSiteRole } from './user-site.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
-import { User } from './user.entity';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Site } from '../site/site.entity';
-import { AppConfigService } from '../config/config.service';
 
-const generateUniqid = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  13,
-);
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
+import { UserSite, UserSiteRole } from './user-site.entity';
+import { User } from './user.entity';
+
+const generateUniqid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 13);
 
 interface InviteTokenPayload {
   user_id: number;
@@ -38,12 +33,7 @@ export class UserSiteService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async addUserToSite(
-    user_id: number,
-    site_id: number,
-    roles: UserSiteRole[],
-    invite: boolean,
-  ): Promise<void> {
+  async addUserToSite(user_id: number, site_id: number, roles: UserSiteRole[], invite: boolean): Promise<void> {
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id, site_id },
     });
@@ -52,9 +42,7 @@ export class UserSiteService {
       throw new BadRequestException('User already has access to this site');
     }
 
-    const invite_code = invite
-      ? await this.generateInviteCode(user_id, site_id)
-      : null;
+    const invite_code = invite ? await this.generateInviteCode(user_id, site_id) : null;
 
     await this.userSiteRepository.save({
       user_id,
@@ -82,8 +70,7 @@ export class UserSiteService {
 
   async generateInviteToken(user_id: number, site_id: number): Promise<string> {
     const invite_code =
-      (await this.getInviteCode(user_id, site_id)) ??
-      (await this.generateInviteCode(user_id, site_id));
+      (await this.getInviteCode(user_id, site_id)) ?? (await this.generateInviteCode(user_id, site_id));
 
     return this.jwtService.sign(
       { user_id, site_id, invite_code },
@@ -91,13 +78,10 @@ export class UserSiteService {
     );
   }
 
-  async validateInviteToken(
-    inviteToken: string,
-  ): Promise<{ userSite: UserSite; user: User }> {
-    const { user_id, site_id, invite_code } =
-      this.jwtService.verify<InviteTokenPayload>(inviteToken, {
-        secret: this.configService.get('app.authSecret'),
-      });
+  async validateInviteToken(inviteToken: string): Promise<{ userSite: UserSite; user: User }> {
+    const { user_id, site_id, invite_code } = this.jwtService.verify<InviteTokenPayload>(inviteToken, {
+      secret: this.configService.get('app.authSecret'),
+    });
 
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id, site_id, invite_code },
@@ -114,10 +98,7 @@ export class UserSiteService {
     return { userSite, user };
   }
 
-  async getInviteCode(
-    user_id: number,
-    site_id: number,
-  ): Promise<string | null> {
+  async getInviteCode(user_id: number, site_id: number): Promise<string | null> {
     const userSite = await this.userSiteRepository.findOne({
       where: { user_id, site_id },
     });
@@ -134,17 +115,10 @@ export class UserSiteService {
   }
 
   async revokeInvite(user_id: number, site_id: number): Promise<void> {
-    await this.userSiteRepository.update(
-      { user_id, site_id },
-      { invite_code: null },
-    );
+    await this.userSiteRepository.update({ user_id, site_id }, { invite_code: null });
   }
 
-  async updateUserSiteRoles(
-    user_id: number,
-    site_id: number,
-    roles: UserSiteRole[],
-  ): Promise<void> {
+  async updateUserSiteRoles(user_id: number, site_id: number, roles: UserSiteRole[]): Promise<void> {
     await this.userSiteRepository.update({ user_id, site_id }, { roles });
   }
 }
