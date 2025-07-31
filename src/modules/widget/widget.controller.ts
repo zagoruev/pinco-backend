@@ -1,11 +1,12 @@
-import { Controller, Get, Header, Query, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
+
+import { Controller, Get, Header, Query, Req, UseGuards } from '@nestjs/common';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { OptionalAuth } from '../../common/decorators/optional-auth.decorator';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
-import { OriginGuard } from '../../common/guards/origin.guard';
 import { RequestUser } from '../../types/express';
 import { WidgetService } from './widget.service';
 
@@ -13,7 +14,7 @@ import { WidgetService } from './widget.service';
   version: VERSION_NEUTRAL,
 })
 @ApiTags('widget')
-@UseGuards(CookieAuthGuard, OriginGuard)
+@UseGuards(CookieAuthGuard)
 @OptionalAuth()
 export class WidgetController {
   constructor(private readonly widgetService: WidgetService) {}
@@ -26,7 +27,7 @@ export class WidgetController {
   @Header('Access-Control-Allow-Credentials', 'true')
   @ApiOperation({ summary: 'Get widget script' })
   @ApiResponse({ status: 200, description: 'Return widget script' })
-  getWidgetScript(@Query('key') key: string, @CurrentUser() user: RequestUser) {
-    return this.widgetService.generateWidgetScript(key, user);
+  getWidgetScript(@Query('key') key: string, @CurrentUser() user: RequestUser, @Req() request: Request) {
+    return this.widgetService.generateWidgetScript(key, user, request);
   }
 }

@@ -63,21 +63,15 @@ describe('WidgetController', () => {
     sites: [mockUserSite],
   };
 
-  const mockWidgetData = {
-    site: mockSite,
-    user: {
-      id: mockUser.id,
-      email: mockUser.email,
-      name: mockUser.name,
-      color: mockUser.color,
-      roles: mockUserSite.roles,
+  const mockRequest = {
+    headers: {
+      origin: 'https://test.com',
+      referer: 'https://test.com/page',
     },
-    comments: [],
-    replies: [],
-  };
+  } as any;
 
   const mockWidgetService = {
-    generateWidgetScript: jest.fn().mockReturnValue('/* Widget script */'),
+    generateWidgetScript: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -99,8 +93,8 @@ describe('WidgetController', () => {
     controller = module.get<WidgetController>(WidgetController);
     service = module.get<WidgetService>(WidgetService);
 
-    // Reset all mocks
     jest.clearAllMocks();
+    mockWidgetService.generateWidgetScript.mockResolvedValue('/* Widget script */');
   });
 
   it('should be defined', () => {
@@ -108,20 +102,42 @@ describe('WidgetController', () => {
   });
 
   describe('getWidgetScript', () => {
-    it('should return widget script for authenticated user', () => {
+    it('should return widget script for authenticated user', async () => {
       const key = 'test-license-key';
-      const result = controller.getWidgetScript(key, mockRequestUser);
+      const result = await controller.getWidgetScript(key, mockRequestUser, mockRequest);
 
-      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, mockRequestUser);
+      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, mockRequestUser, mockRequest);
       expect(result).toEqual('/* Widget script */');
     });
 
-    it('should return widget script for unauthenticated user', () => {
+    it('should return widget script for unauthenticated user', async () => {
       const key = 'test-license-key';
-      const result = controller.getWidgetScript(key, undefined as unknown as RequestUser);
+      const result = await controller.getWidgetScript(key, undefined as unknown as RequestUser, mockRequest);
 
-      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, undefined);
+      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, undefined, mockRequest);
       expect(result).toEqual('/* Widget script */');
+    });
+
+    it('should handle request with only referer header', async () => {
+      const key = 'test-license-key';
+      const requestWithOnlyReferer = {
+        headers: {
+          referer: 'https://test.com/page',
+        },
+      } as any;
+
+      const result = await controller.getWidgetScript(key, mockRequestUser, requestWithOnlyReferer);
+
+      expect(service.generateWidgetScript).toHaveBeenCalledWith(key, mockRequestUser, requestWithOnlyReferer);
+      expect(result).toEqual('/* Widget script */');
+    });
+
+    it('should pass through service errors', async () => {
+      const key = 'test-license-key';
+      const error = new Error('Service error');
+      mockWidgetService.generateWidgetScript.mockRejectedValueOnce(error);
+
+      await expect(controller.getWidgetScript(key, mockRequestUser, mockRequest)).rejects.toThrow('Service error');
     });
   });
 });

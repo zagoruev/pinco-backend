@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Request } from 'express';
+import { Repository } from 'typeorm';
+
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import { RequestUser } from '../../types/express';
 import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
 import { USER_COLORS } from '../user/user.entity';
 
 interface PincoConfig {
@@ -13,7 +18,11 @@ interface PincoConfig {
 
 @Injectable()
 export class WidgetService {
-  constructor(private readonly configService: AppConfigService) {}
+  constructor(
+    private readonly configService: AppConfigService,
+    @InjectRepository(Site)
+    private siteRepository: Repository<Site>,
+  ) {}
 
   private createDomElement(tagName: string, attributes: Record<string, string>): string {
     const attributeStrings = Object.entries(attributes)
@@ -44,7 +53,25 @@ export class WidgetService {
     return scriptElement + styleElement;
   }
 
-  generateWidgetScript(key: string, user: RequestUser): string {
+  async generateWidgetScript(key: string, user: RequestUser, request: Request): Promise<string> {
+    const { headers } = request;
+    const origin = headers.origin ?? headers.referer;
+
+    if (!origin) {
+      throw new ForbiddenException('Origin not provided');
+    }
+
+    const url = new URL(origin);
+    const domain = url.hostname;
+
+    const site = await this.siteRepository.findOne({
+      where: { domain, active: true },
+    });
+
+    if (!site) {
+      return 'console.info("Pinco: site not found");';
+    }
+
     const pincoConfig: PincoConfig = {
       apiRoot: `${this.configService.get('app.url')}/`,
       colors: USER_COLORS,
