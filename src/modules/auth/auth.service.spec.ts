@@ -3,37 +3,40 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as argon2 from 'argon2';
 import { UnauthorizedException } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
-import { SecretService } from './secret.service';
 import { User, UserRole } from '../user/user.entity';
-import { UserSite } from '../user/user-site.entity';
+import { UserSite, UserSiteRole } from '../user/user-site.entity';
+import { UserSiteService } from '../user/user-site.service';
+import { AppConfigService } from '../config/config.service';
+import { Site } from '../site/site.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: Repository<User>;
-  let userSiteRepository: Repository<UserSite>;
   let tokenService: TokenService;
-  let secretService: SecretService;
+  let userSiteService: UserSiteService;
+  let configService: AppConfigService;
 
-  const mockUser: User = {
+  const mockUser = {
     id: 1,
     email: 'admin@example.com',
     name: 'Admin User',
-    color: '#FF0000',
     username: 'admin',
     password: 'hashed-password',
     active: true,
     roles: [UserRole.ADMIN],
-    secret_token: null,
-    secret_expires: null,
     created: new Date(),
     updated: new Date(),
-    userSites: [],
+    sites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+    get color() {
+      return '#4C53F1';
+    },
+  } as User;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,21 +50,21 @@ describe('AuthService', () => {
           },
         },
         {
-          provide: getRepositoryToken(UserSite),
-          useValue: {
-            find: jest.fn(),
-          },
-        },
-        {
           provide: TokenService,
           useValue: {
-            signToken: jest.fn().mockResolvedValue('mock-token'),
+            signToken: jest.fn().mockReturnValue('mock-token'),
           },
         },
         {
-          provide: SecretService,
+          provide: UserSiteService,
           useValue: {
-            validateSecretToken: jest.fn(),
+            validateInviteToken: jest.fn(),
+          },
+        },
+        {
+          provide: AppConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue(3600000),
           },
         },
       ],
@@ -69,11 +72,9 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    userSiteRepository = module.get<Repository<UserSite>>(
-      getRepositoryToken(UserSite),
-    );
     tokenService = module.get<TokenService>(TokenService);
-    secretService = module.get<SecretService>(SecretService);
+    userSiteService = module.get<UserSiteService>(UserSiteService);
+    configService = module.get<AppConfigService>(AppConfigService);
   });
 
   describe('validateUser', () => {
@@ -104,9 +105,15 @@ describe('AuthService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null for commenter role', async () => {
-      const commenterUser = { ...mockUser, roles: [UserRole.COMMENTER] };
-      jest.spyOn(userRepository, 'findOne').mockResolvedValue(commenterUser);
+    it('should return null for non-admin/root role', async () => {
+      const regularUser = {
+        ...mockUser,
+        roles: [],
+        get color() {
+          return '#4C53F1';
+        },
+      } as User;
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(regularUser);
       jest.spyOn(argon2, 'verify').mockResolvedValue(true);
 
       const result = await service.validateUser('user@example.com', 'password');
@@ -116,7 +123,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return token for valid login', async () => {
+    it('should return token and user for valid login', async () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
 
       const result = await service.login({
@@ -124,7 +131,7 @@ describe('AuthService', () => {
         password: 'password',
       });
 
-      expect(result).toEqual({ token: 'mock-token' });
+      expect(result).toEqual({ token: 'mock-token', user: mockUser });
       expect(tokenService.signToken).toHaveBeenCalledWith(mockUser);
     });
 
@@ -137,27 +144,76 @@ describe('AuthService', () => {
     });
   });
 
-  describe('loginWithSecret', () => {
-    it('should return token and user for valid secret', async () => {
+  describe('loginWithInvite', () => {
+    const mockSite: Site = {
+      id: 1,
+      name: 'Test Site',
+      url: 'https://test.com',
+      domain: 'test.com',
+      license: 'ABC123',
+      active: true,
+      created: new Date(),
+      updated: new Date(),
+      userSites: [],
+      comments: [],
+    } as Site;
+
+    const mockUserSite = {
+      user_id: 1,
+      site_id: 1,
+      roles: [UserSiteRole.ADMIN],
+      invite_code: 'valid-invite',
+      created: new Date(),
+      updated: new Date(),
+      user: mockUser,
+      site: mockSite,
+    } as UserSite;
+
+    it('should return token, user and site for valid invite', async () => {
       jest
-        .spyOn(secretService, 'validateSecretToken')
-        .mockResolvedValue(mockUser);
-      jest.spyOn(userSiteRepository, 'find').mockResolvedValue([]);
+        .spyOn(userSiteService, 'validateInviteToken')
+        .mockResolvedValue({ user: mockUser, userSite: mockUserSite });
 
-      const result = await service.loginWithSecret('valid-secret');
+      const result = await service.loginWithInvite('valid-invite');
 
-      expect(result).toEqual({ token: 'mock-token', user: mockUser });
-      expect(secretService.validateSecretToken).toHaveBeenCalledWith(
-        'valid-secret',
+      expect(result).toEqual({
+        token: 'mock-token',
+        user: mockUser,
+        site: mockSite,
+      });
+      expect(userSiteService.validateInviteToken).toHaveBeenCalledWith(
+        'valid-invite',
       );
     });
 
-    it('should throw UnauthorizedException for invalid secret', async () => {
-      jest.spyOn(secretService, 'validateSecretToken').mockResolvedValue(null);
+    it('should throw UnauthorizedException for invalid invite', async () => {
+      jest.spyOn(userSiteService, 'validateInviteToken').mockResolvedValue({
+        user: null as unknown as User,
+        userSite: null as unknown as UserSite,
+      });
 
-      await expect(service.loginWithSecret('invalid-secret')).rejects.toThrow(
+      await expect(service.loginWithInvite('invalid-invite')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('setAuthCookie', () => {
+    it('should set auth cookie with correct options', () => {
+      const mockResponse = {
+        cookie: jest.fn(),
+      } as unknown as Response;
+
+      service.setAuthCookie(mockResponse, 'test-token');
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith('token', 'test-token', {
+        httpOnly: true,
+        secure: true,
+        signed: true,
+        sameSite: 'none',
+        maxAge: 3600000,
+      });
+      expect(configService.get).toHaveBeenCalledWith('app.authTokenExpiresIn');
     });
   });
 });

@@ -5,6 +5,7 @@ import * as cookieParser from 'cookie-parser';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from '../src/modules/auth/auth.controller';
 import { AuthService } from '../src/modules/auth/auth.service';
+import { Site } from '../src/modules/site/site.entity';
 import { User, UserRole } from '../src/modules/user/user.entity';
 
 describe('AuthController (e2e)', () => {
@@ -14,20 +15,20 @@ describe('AuthController (e2e)', () => {
     id: 1,
     email: 'admin@example.com',
     name: 'Admin',
-    color: '#000000',
     username: 'admin',
     password: 'hashed',
     active: true,
     roles: [UserRole.ADMIN],
-    secret_token: 'valid-secret',
-    secret_expires: null,
     created: new Date(),
     updated: new Date(),
     sites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+    get color() {
+      return '#000000';
+    },
+  } as User;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -50,10 +51,14 @@ describe('AuthController (e2e)', () => {
         {
           provide: AuthService,
           useValue: {
-            login: jest.fn().mockResolvedValue({ token: 'test-token' }),
-            loginWithSecret: jest
+            login: jest
               .fn()
               .mockResolvedValue({ token: 'test-token', user: mockUser }),
+            loginWithInvite: jest.fn().mockResolvedValue({
+              token: 'test-token',
+              site: { url: 'https://test.com' },
+            }),
+            setAuthCookie: jest.fn(),
           },
         },
         {
@@ -70,7 +75,7 @@ describe('AuthController (e2e)', () => {
       ],
     }).compile();
 
-    authService = moduleFixture.get<AuthService>(AuthService);
+    const authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
@@ -89,7 +94,7 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'admin@example.com', password: 'password' })
         .expect(200)
         .expect((res) => {
-          expect(res.body).toEqual({ message: 'Login successful' });
+          expect(res.body).toEqual({ user: 1 });
           expect(res.headers['set-cookie']).toBeDefined();
         });
     });
@@ -98,13 +103,13 @@ describe('AuthController (e2e)', () => {
   describe('/api/v1/auth/login (GET)', () => {
     it('should login with secret and redirect', () => {
       return request(app.getHttpServer())
-        .get('/api/v1/auth/login?secret=valid-secret')
+        .get('/api/v1/auth/login?invite=valid-invite')
         .expect(302)
-        .expect('Location', '/');
+        .expect('Location', 'https://test.com');
     });
 
-    it('should return 401 without secret', () => {
-      return request(app.getHttpServer()).get('/api/v1/auth/login').expect(401);
+    it('should return 400 without invite', () => {
+      return request(app.getHttpServer()).get('/api/v1/auth/login').expect(400);
     });
   });
 

@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReplyController } from './reply.controller';
 import { ReplyService } from './reply.service';
 import { Site } from '../site/site.entity';
-import { TokenPayload } from '../auth/token.service';
+import { RequestUser } from '../../types/express';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
+import { Reply } from './reply.entity';
 import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
 import { OriginGuard } from '../../common/guards/origin.guard';
 import { UserSiteRole } from '../user/user-site.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('ReplyController', () => {
   let controller: ReplyController;
@@ -26,10 +28,11 @@ describe('ReplyController', () => {
     comments: [],
   };
 
-  const mockTokenPayload: TokenPayload = {
+  const mockRequestUser: RequestUser = {
     id: 1,
     email: 'user@example.com',
     roles: [UserSiteRole.COLLABORATOR],
+    sites: [],
   };
 
   const mockReplyResponse = {
@@ -51,6 +54,14 @@ describe('ReplyController', () => {
             findAll: jest.fn().mockResolvedValue([mockReplyResponse]),
             create: jest.fn().mockResolvedValue(mockReplyResponse),
             update: jest.fn().mockResolvedValue(mockReplyResponse),
+          },
+        },
+        {
+          provide: getRepositoryToken(Reply),
+          useValue: {
+            find: jest.fn(),
+            findOne: jest.fn(),
+            save: jest.fn(),
           },
         },
       ],
@@ -88,13 +99,13 @@ describe('ReplyController', () => {
       const result = await controller.create(
         createDto,
         mockSite,
-        mockTokenPayload, 
+        mockRequestUser,
       );
 
       expect(service.create).toHaveBeenCalledWith(
         createDto,
         mockSite,
-        mockTokenPayload,
+        mockRequestUser,
       );
       expect(result).toEqual(mockReplyResponse);
     });
@@ -111,14 +122,14 @@ describe('ReplyController', () => {
         '1',
         updateDto,
         mockSite,
-        mockTokenPayload,
+        mockRequestUser,
       );
 
       expect(service.update).toHaveBeenCalledWith(
         1,
         updateDto,
         mockSite,
-        mockTokenPayload,
+        mockRequestUser,
       );
       expect(result).toEqual(mockReplyResponse);
     });

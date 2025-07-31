@@ -20,6 +20,7 @@ describe('ReplyController (e2e)', () => {
   let app: INestApplication;
   let replyRepository: Repository<Reply>;
   let commentRepository: Repository<Comment>;
+  let siteRepository: Repository<Site>;
   let tokenService: TokenService;
   let userToken: string;
 
@@ -27,6 +28,7 @@ describe('ReplyController (e2e)', () => {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -39,20 +41,20 @@ describe('ReplyController (e2e)', () => {
     id: 1,
     email: 'user@example.com',
     name: 'Test User',
-    color: '#FF0000',
     username: 'testuser',
     password: 'hashed',
     active: true,
     roles: [],
-    secret_token: null,
-    secret_expires: null,
     created: new Date(),
     updated: new Date(),
     sites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+    get color() {
+      return '#FF0000';
+    },
+  } as User;
 
   const mockComment: Comment = {
     id: 1,
@@ -71,7 +73,10 @@ describe('ReplyController (e2e)', () => {
     site: mockSite,
     replies: [],
     views: [],
-  };
+    get viewed() {
+      return null;
+    },
+  } as Comment;
 
   const mockReply: Reply = {
     id: 1,
@@ -156,7 +161,7 @@ describe('ReplyController (e2e)', () => {
     await app.init();
 
     // Generate user token
-    userToken = await tokenService.signToken(mockUser, [mockSite.id]);
+    userToken = tokenService.signToken(mockUser);
   });
 
   afterAll(async () => {
@@ -169,7 +174,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/replies')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .expect(200)
         .expect((res) => {
@@ -197,7 +202,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/replies')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .expect(403);
     });
   });
@@ -218,7 +223,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/replies')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(createDto)
         .expect(201)
@@ -240,7 +245,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/replies')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(createDto)
         .expect(400);
@@ -254,7 +259,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/replies')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(createDto)
         .expect(400);
@@ -271,7 +276,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/replies/1')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(updateDto)
         .expect(200)
@@ -292,7 +297,7 @@ describe('ReplyController (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/replies/1')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(updateDto)
         .expect(400);

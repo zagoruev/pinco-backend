@@ -22,6 +22,7 @@ import { ScreenshotService } from '../src/modules/screenshot/screenshot.service'
 describe('CommentController (e2e)', () => {
   let app: INestApplication;
   let commentRepository: Repository<Comment>;
+  let siteRepository: Repository<Site>;
   let tokenService: TokenService;
   let screenshotService: ScreenshotService;
   let userToken: string;
@@ -30,6 +31,7 @@ describe('CommentController (e2e)', () => {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -42,20 +44,20 @@ describe('CommentController (e2e)', () => {
     id: 1,
     email: 'user@example.com',
     name: 'Test User',
-    color: '#FF0000',
     username: 'testuser',
     password: 'hashed',
     active: true,
-    roles: [UserRole.COMMENTER],
-    secret_token: null,
-    secret_expires: null,
+    roles: [],
     created: new Date(),
     updated: new Date(),
-    userSites: [],
+    sites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+    get color() {
+      return '#FF0000';
+    },
+  } as User;
 
   const mockComment: Comment = {
     id: 1,
@@ -74,7 +76,10 @@ describe('CommentController (e2e)', () => {
     site: mockSite,
     replies: [],
     views: [],
-  };
+    get viewed() {
+      return null;
+    },
+  } as Comment;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -157,7 +162,7 @@ describe('CommentController (e2e)', () => {
     await app.init();
 
     // Generate user token
-    userToken = await tokenService.signToken(mockUser, [mockSite.id]);
+    userToken = tokenService.signToken(mockUser);
   });
 
   afterAll(async () => {
@@ -170,7 +175,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/comments')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .expect(200)
         .expect((res: request.Response) => {
@@ -195,7 +200,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/comments')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .expect(403);
     });
   });
@@ -215,7 +220,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/comments')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(createDto)
         .expect(201)
@@ -239,7 +244,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .post('/api/v1/comments')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .field('message', 'Comment with screenshot')
         .field('url', 'https://test.com/page')
@@ -258,7 +263,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .patch('/api/v1/comments/1')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .send(updateDto)
         .expect(200)
@@ -276,7 +281,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/comments/1/view')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .expect(200)
         .expect((res) => {
@@ -292,7 +297,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/comments/1/unview')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .expect(200)
         .expect((res) => {
@@ -310,7 +315,7 @@ describe('CommentController (e2e)', () => {
 
       return request(app.getHttpServer())
         .get('/api/v1/comments/view-all')
-        .set('Cookie', [`auth-token=s:${signedToken}`])
+        .set('Cookie', [`token=s:${signedToken}`])
         .set('Origin', 'https://test.com')
         .expect(200);
     });

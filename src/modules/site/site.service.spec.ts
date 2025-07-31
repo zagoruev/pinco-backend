@@ -1,25 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { SiteService } from './site.service';
 import { Site } from './site.entity';
+import { User } from '../user/user.entity';
+import { UserSite } from '../user/user-site.entity';
 
 describe('SiteService', () => {
   let service: SiteService;
   let repository: Repository<Site>;
+  let userRepository: Repository<User>;
+  let userSiteRepository: Repository<UserSite>;
 
-  const mockSite: Site = {
+  const mockSite = {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
     updated: new Date(),
     userSites: [],
     comments: [],
-  };
+  } as Site;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,7 +37,18 @@ describe('SiteService', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
+            findOneOrFail: jest.fn(),
             remove: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(UserSite),
+          useValue: {
+            find: jest.fn(),
           },
         },
       ],
@@ -40,6 +56,10 @@ describe('SiteService', () => {
 
     service = module.get<SiteService>(SiteService);
     repository = module.get<Repository<Site>>(getRepositoryToken(Site));
+    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    userSiteRepository = module.get<Repository<UserSite>>(
+      getRepositoryToken(UserSite),
+    );
   });
 
   describe('create', () => {
@@ -47,7 +67,7 @@ describe('SiteService', () => {
       const createDto = {
         name: 'New Site',
         license: 'LICENSE-456',
-        domain: 'new.com',
+        url: 'https://new.com',
         active: true,
       };
 
@@ -59,9 +79,12 @@ describe('SiteService', () => {
 
       expect(result).toEqual(mockSite);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { domain: createDto.domain },
+        where: { domain: 'new.com' },
       });
-      expect(repository.create).toHaveBeenCalledWith(createDto);
+      expect(repository.create).toHaveBeenCalledWith({
+        ...createDto,
+        domain: 'new.com',
+      });
       expect(repository.save).toHaveBeenCalledWith(mockSite);
     });
 
@@ -69,7 +92,7 @@ describe('SiteService', () => {
       const createDto = {
         name: 'New Site',
         license: 'LICENSE-456',
-        domain: 'test.com',
+        url: 'https://test.com',
       };
 
       jest.spyOn(repository, 'findOne').mockResolvedValue(mockSite);
@@ -80,36 +103,24 @@ describe('SiteService', () => {
     });
   });
 
-  describe('findAll', () => {
-    it('should return all sites', async () => {
-      const sites = [mockSite];
-      jest.spyOn(repository, 'find').mockResolvedValue(sites);
+  describe('getUserSites', () => {
+    it('should return user sites', async () => {
+      const userSites = [
+        {
+          user_id: 1,
+          site_id: 1,
+          site: mockSite,
+        } as UserSite,
+      ];
+      jest.spyOn(userSiteRepository, 'find').mockResolvedValue(userSites);
 
-      const result = await service.findAll();
+      const result = await service.getUserSites(1);
 
-      expect(result).toEqual(sites);
-      expect(repository.find).toHaveBeenCalledWith({
-        order: { created: 'DESC' },
+      expect(result).toEqual(userSites);
+      expect(userSiteRepository.find).toHaveBeenCalledWith({
+        where: { user_id: 1 },
+        relations: ['site'],
       });
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return a site by id', async () => {
-      jest.spyOn(repository, 'findOne').mockResolvedValue(mockSite);
-
-      const result = await service.findOne(1);
-
-      expect(result).toEqual(mockSite);
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { id: 1 },
-      });
-    });
-
-    it('should throw NotFoundException if site not found', async () => {
-      jest.spyOn(repository, 'findOne').mockResolvedValue(null);
-
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -118,37 +129,39 @@ describe('SiteService', () => {
       const updateDto = { name: 'Updated Site' };
       const updatedSite = { ...mockSite, ...updateDto };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(mockSite);
+      jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'save').mockResolvedValue(updatedSite);
 
       const result = await service.update(1, updateDto);
 
       expect(result).toEqual(updatedSite);
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(repository.findOneOrFail).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
       expect(repository.save).toHaveBeenCalled();
     });
 
-    it('should check for domain conflicts when updating domain', async () => {
-      const updateDto = { domain: 'new-domain.com' };
+    it('should check for domain conflicts when updating url', async () => {
+      const updateDto = { url: 'https://new-domain.com' };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(mockSite);
+      jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
       jest
         .spyOn(repository, 'save')
-        .mockResolvedValue({ ...mockSite, ...updateDto });
+        .mockResolvedValue({ ...mockSite, domain: 'new-domain.com' });
 
       await service.update(1, updateDto);
 
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { domain: updateDto.domain },
+        where: { domain: 'new-domain.com' },
       });
     });
 
     it('should throw ConflictException if new domain already exists', async () => {
-      const updateDto = { domain: 'existing.com' };
+      const updateDto = { url: 'https://existing.com' };
       const existingSite = { ...mockSite, id: 2, domain: 'existing.com' };
 
-      jest.spyOn(service, 'findOne').mockResolvedValue(mockSite);
+      jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'findOne').mockResolvedValue(existingSite);
 
       await expect(service.update(1, updateDto)).rejects.toThrow(
@@ -159,19 +172,23 @@ describe('SiteService', () => {
 
   describe('remove', () => {
     it('should remove a site', async () => {
-      jest.spyOn(service, 'findOne').mockResolvedValue(mockSite);
+      jest.spyOn(repository, 'findOneOrFail').mockResolvedValue(mockSite);
       jest.spyOn(repository, 'remove').mockResolvedValue(mockSite);
 
       await service.remove(1);
 
-      expect(service.findOne).toHaveBeenCalledWith(1);
+      expect(repository.findOneOrFail).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
       expect(repository.remove).toHaveBeenCalledWith(mockSite);
     });
 
-    it('should throw NotFoundException if site not found', async () => {
-      jest.spyOn(service, 'findOne').mockRejectedValue(new NotFoundException());
+    it('should throw error if site not found', async () => {
+      jest
+        .spyOn(repository, 'findOneOrFail')
+        .mockRejectedValue(new Error('Entity not found'));
 
-      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(999)).rejects.toThrow('Entity not found');
     });
   });
 });

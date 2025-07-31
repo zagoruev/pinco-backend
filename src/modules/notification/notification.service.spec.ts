@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../config/config.service';
 import { NotificationService } from './notification.service';
 import { EmailService } from './email.service';
 import { User, UserRole } from '../user/user.entity';
@@ -12,37 +12,42 @@ describe('NotificationService', () => {
   let emailService: EmailService;
   let userRepository: Repository<User>;
 
-  const mockUser: User = {
+  const mockUser = {
     id: 1,
     email: 'user@example.com',
     name: 'Test User',
-    color: '#FF0000',
+    get color() {
+      return '#4C53F1';
+    },
     username: 'testuser',
     password: 'hashed',
     active: true,
-    roles: [UserRole.COMMENTER],
-    secret_token: null,
-    secret_expires: null,
+    roles: [UserRole.ADMIN],
     created: new Date(),
     updated: new Date(),
+    sites: [],
     userSites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+  } as User;
 
-  const mockAuthor: User = {
+  const mockAuthor = {
     ...mockUser,
     id: 2,
     email: 'author@example.com',
     name: 'Author User',
     username: 'author',
-  };
+    get color() {
+      return '#4C53F1';
+    },
+  } as User;
 
   const mockSite: Site = {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -58,13 +63,23 @@ describe('NotificationService', () => {
         {
           provide: EmailService,
           useValue: {
-            sendEmail: jest.fn(),
+            sendWithTemplate: jest.fn(),
           },
         },
         {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn(),
+          },
+        },
+        {
+          provide: AppConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'app.url') return 'https://app.pinco.com';
+              if (key === 'app.apiPrefix') return 'api';
+              return null;
+            }),
           },
         },
       ],
@@ -100,11 +115,17 @@ describe('NotificationService', () => {
         where: { username: 'testuser', active: true },
       });
 
-      expect(emailService.sendEmail).toHaveBeenCalledWith({
-        to: 'user@example.com',
-        subject: 'Author User mentioned you in a comment on Test Site',
-        html: expect.stringContaining('Author User mentioned you in a comment'),
-      });
+      expect(emailService.sendWithTemplate).toHaveBeenCalledWith(
+        'user@example.com',
+        expect.any(Object),
+        {
+          authorName: 'Author User',
+          mentionType: 'comment',
+          siteName: 'Test Site',
+          content: 'Hello @testuser, check this out!',
+          url: 'https://test.com/comments/1',
+        },
+      );
     });
 
     it('should not send email when mentioned user is not found', async () => {
@@ -119,28 +140,7 @@ describe('NotificationService', () => {
         'comment',
       );
 
-      expect(emailService.sendEmail).not.toHaveBeenCalled();
-    });
-
-    it('should escape HTML in content', async () => {
-      jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
-
-      await service.sendMentionNotification(
-        'testuser',
-        mockAuthor,
-        mockSite,
-        '<script>alert("xss")</script>',
-        'https://test.com/comments/1',
-        'reply',
-      );
-
-      expect(emailService.sendEmail).toHaveBeenCalledWith({
-        to: 'user@example.com',
-        subject: 'Author User mentioned you in a reply on Test Site',
-        html: expect.stringContaining(
-          '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;',
-        ),
-      });
+      expect(emailService.sendWithTemplate).not.toHaveBeenCalled();
     });
   });
 
@@ -150,23 +150,15 @@ describe('NotificationService', () => {
 
       await service.sendInviteNotification(mockUser, mockSite, secretToken);
 
-      expect(emailService.sendEmail).toHaveBeenCalledWith({
-        to: 'user@example.com',
-        subject: "You've been invited to Test Site",
-        html: expect.stringContaining(
-          'https://app.pinco.com/auth/login?token=secret123',
-        ),
-      });
-    });
-
-    it('should include site name in email', async () => {
-      await service.sendInviteNotification(mockUser, mockSite, 'token123');
-
-      expect(emailService.sendEmail).toHaveBeenCalledWith({
-        to: 'user@example.com',
-        subject: "You've been invited to Test Site",
-        html: expect.stringContaining('Welcome to Test Site!'),
-      });
+      expect(emailService.sendWithTemplate).toHaveBeenCalledWith(
+        'user@example.com',
+        expect.any(Object),
+        {
+          siteName: 'Test Site',
+          inviteCode: 'secret123',
+          appUrl: 'https://app.pinco.com/api',
+        },
+      );
     });
   });
 

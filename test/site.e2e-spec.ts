@@ -3,90 +3,101 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import * as cookieParser from 'cookie-parser';
 import * as cookieSignature from 'cookie-signature';
-import { ConfigModule } from '@nestjs/config';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SiteModule } from '../src/modules/site/site.module';
-import { AuthModule } from '../src/modules/auth/auth.module';
+import { SiteController } from '../src/modules/site/site.controller';
+import { SiteService } from '../src/modules/site/site.service';
 import { Site } from '../src/modules/site/site.entity';
 import { User, UserRole } from '../src/modules/user/user.entity';
 import { UserSite } from '../src/modules/user/user-site.entity';
+import { CookieAuthGuard } from '../src/common/guards/cookie-auth.guard';
 import { TokenService } from '../src/modules/auth/token.service';
+import { JwtService } from '@nestjs/jwt';
+import { AppConfigService } from '../src/modules/config/config.service';
 
 describe('SiteController (e2e)', () => {
   let app: INestApplication;
-  let siteRepository: Repository<Site>;
+  let siteService: SiteService;
   let tokenService: TokenService;
   let adminToken: string;
 
-  const mockSite: Site = {
+  // Set environment variables for the test
+  process.env.AUTH_TOKEN_EXPIRES_IN = '30d';
+  process.env.API_PREFIX = 'api/v1';
+  process.env.AUTH_SECRET = 'test-jwt-secret';
+  process.env.APP_URL = 'http://localhost:3000';
+  process.env.WIDGET_URL = 'http://localhost:3001';
+
+  const mockSite = {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
     updated: new Date(),
     userSites: [],
     comments: [],
-  };
+  } as Site;
 
-  const mockAdmin: User = {
+  const mockAdmin = {
     id: 1,
     email: 'admin@example.com',
     name: 'Admin',
-    color: '#000000',
     username: 'admin',
     password: 'hashed',
     active: true,
     roles: [UserRole.ADMIN],
-    secret_token: null,
-    secret_expires: null,
     created: new Date(),
     updated: new Date(),
     sites: [],
     comments: [],
     replies: [],
     commentViews: [],
+    get color() {
+      return '#4C53F1';
+    },
+  } as User;
+
+  const mockSiteService = {
+    findAll: jest.fn().mockResolvedValue([mockSite]),
+    findOne: jest.fn().mockResolvedValue(mockSite),
+    create: jest.fn().mockResolvedValue(mockSite),
+    update: jest.fn().mockResolvedValue(mockSite),
+    remove: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const config: Record<string, any> = {
+        'app.authSecret': 'test-jwt-secret',
+        'app.authTokenExpiresIn': 30 * 24 * 60 * 60 * 1000,
+      };
+      return config[key];
+    }),
   };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [
-            () => ({
-              app: {
-                apiPrefix: 'api/v1',
-                jwtSecret: 'test-jwt-secret',
-                jwtExpiresIn: '30d',
-              },
-            }),
-          ],
-        }),
-        AuthModule,
-        SiteModule,
+      controllers: [SiteController],
+      providers: [
+        {
+          provide: SiteService,
+          useValue: mockSiteService,
+        },
+        TokenService,
+        JwtService,
+        {
+          provide: AppConfigService,
+          useValue: mockConfigService,
+        },
       ],
     })
-      .overrideProvider(getRepositoryToken(Site))
-      .useValue({
-        find: jest.fn().mockResolvedValue([mockSite]),
-        findOne: jest.fn().mockResolvedValue(mockSite),
-        create: jest.fn().mockReturnValue(mockSite),
-        save: jest.fn().mockResolvedValue(mockSite),
-        remove: jest.fn().mockResolvedValue(mockSite),
-      })
-      .overrideProvider(getRepositoryToken(User))
-      .useValue({})
-      .overrideProvider(getRepositoryToken(UserSite))
-      .useValue({})
+      .overrideGuard(CookieAuthGuard)
+      .useValue({ canActivate: () => true })
       .compile();
 
-    siteRepository = moduleFixture.get<Repository<Site>>(
-      getRepositoryToken(Site),
-    );
     tokenService = moduleFixture.get<TokenService>(TokenService);
+    siteService = moduleFixture.get<SiteService>(SiteService);
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
@@ -142,7 +153,6 @@ describe('SiteController (e2e)', () => {
       };
 
       const signedToken = cookieSignature.sign(adminToken, 'test-secret');
-      jest.spyOn(siteRepository, 'findOne').mockResolvedValueOnce(null);
 
       return request(app.getHttpServer())
         .post('/api/v1/sites')

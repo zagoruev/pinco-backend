@@ -8,7 +8,10 @@ import { Reply } from './reply.entity';
 import { Comment } from '../comment/comment.entity';
 import { Site } from '../site/site.entity';
 import { User, UserRole } from '../user/user.entity';
-import { TokenPayload } from '../auth/token.service';
+import { RequestUser } from '../../types/express';
+import * as replyUtils from './reply.utils';
+
+jest.mock('./reply.utils');
 
 describe('ReplyService', () => {
   let service: ReplyService;
@@ -20,6 +23,7 @@ describe('ReplyService', () => {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -28,26 +32,27 @@ describe('ReplyService', () => {
     comments: [],
   };
 
-  const mockUser: User = {
+  const mockUser = {
     id: 1,
     email: 'user@example.com',
     name: 'Test User',
-    color: '#FF0000',
+    get color() {
+      return '#4C53F1';
+    },
     username: 'testuser',
     password: 'hashed',
     active: true,
-    roles: [UserRole.COMMENTER],
-    secret_token: null,
-    secret_expires: null,
+    roles: [UserRole.ADMIN],
     created: new Date(),
     updated: new Date(),
+    sites: [],
     userSites: [],
     comments: [],
     replies: [],
     commentViews: [],
-  };
+  } as User;
 
-  const mockComment: Comment = {
+  const mockComment = {
     id: 1,
     uniqid: 'abc123def4567',
     message: 'Test comment',
@@ -64,7 +69,10 @@ describe('ReplyService', () => {
     site: mockSite,
     replies: [],
     views: [],
-  };
+    get viewed() {
+      return null;
+    },
+  } as Comment;
 
   const mockReply: Reply = {
     id: 1,
@@ -77,12 +85,16 @@ describe('ReplyService', () => {
     user: mockUser,
   };
 
-  const mockTokenPayload: TokenPayload = {
+  const mockRequestUser: RequestUser = {
     id: 1,
     email: 'user@example.com',
-    sites: [1],
-    roles: ['COMMENTER'],
+    roles: [UserRole.ADMIN],
+    sites: [],
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -102,12 +114,15 @@ describe('ReplyService', () => {
             create: jest.fn().mockReturnValue(mockReply),
             save: jest.fn().mockResolvedValue(mockReply),
             findOne: jest.fn().mockResolvedValue(mockReply),
+            findOneOrFail: jest.fn().mockResolvedValue(mockReply),
           },
         },
         {
           provide: getRepositoryToken(Comment),
           useValue: {
             findOne: jest.fn().mockResolvedValue(mockComment),
+            findOneOrFail: jest.fn().mockResolvedValue(mockComment),
+            save: jest.fn().mockResolvedValue(mockComment),
           },
         },
         {
@@ -136,14 +151,7 @@ describe('ReplyService', () => {
       const result = await service.findAll(mockSite);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: mockReply.id,
-        comment_id: mockReply.comment_id,
-        message: mockReply.message,
-        created: mockReply.created.toISOString(),
-        updated: mockReply.updated.toISOString(),
-        user_id: mockReply.user_id,
-      });
+      expect(result[0]).toEqual(mockReply);
     });
   });
 
@@ -154,19 +162,15 @@ describe('ReplyService', () => {
         message: 'New reply',
       };
 
-      const result = await service.create(
-        createDto,
-        mockSite,
-        mockTokenPayload,
-      );
+      const result = await service.create(createDto, mockSite, mockRequestUser);
 
-      expect(commentRepository.findOne).toHaveBeenCalledWith({
+      expect(commentRepository.findOneOrFail).toHaveBeenCalledWith({
         where: { id: createDto.comment_id, site_id: mockSite.id },
         relations: ['user'],
       });
       expect(replyRepository.create).toHaveBeenCalledWith({
         comment_id: createDto.comment_id,
-        user_id: mockTokenPayload.id,
+        user_id: mockRequestUser.id,
         message: createDto.message,
       });
       expect(replyRepository.save).toHaveBeenCalled();
@@ -175,18 +179,13 @@ describe('ReplyService', () => {
         comment: mockComment,
         site: mockSite,
       });
-      expect(result).toEqual({
-        id: mockReply.id,
-        comment_id: mockReply.comment_id,
-        message: mockReply.message,
-        created: mockReply.created.toISOString(),
-        updated: mockReply.updated.toISOString(),
-        user_id: mockReply.user_id,
-      });
+      expect(result).toEqual(mockReply);
     });
 
-    it('should throw NotFoundException if comment does not exist', async () => {
-      jest.spyOn(commentRepository, 'findOne').mockResolvedValueOnce(null);
+    it('should throw error if comment does not exist', async () => {
+      jest
+        .spyOn(commentRepository, 'findOneOrFail')
+        .mockRejectedValue(new Error('Entity not found'));
 
       const createDto = {
         comment_id: 999,
@@ -194,8 +193,141 @@ describe('ReplyService', () => {
       };
 
       await expect(
-        service.create(createDto, mockSite, mockTokenPayload),
-      ).rejects.toThrow(NotFoundException);
+        service.create(createDto, mockSite, mockRequestUser),
+      ).rejects.toThrow('Entity not found');
+    });
+
+    it('should mark comment as resolved if reply contains resolve marker', async () => {
+      const createDto = {
+        comment_id: 1,
+        message: '{{{resolved}}}',
+      };
+      const unresolvedComment = {
+        ...mockComment,
+        resolved: false,
+        get viewed() {
+          return null;
+        },
+      } as Comment;
+
+      // Mock isResolveAdded to return true for the resolve marker
+      (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(true);
+
+      jest
+        .spyOn(commentRepository, 'findOneOrFail')
+        .mockResolvedValue(unresolvedComment);
+      jest.spyOn(commentRepository, 'save').mockResolvedValue({
+        ...unresolvedComment,
+        resolved: true,
+      } as Comment);
+
+      const resolveReply = {
+        ...mockReply,
+        message: '{{{resolved}}}',
+      };
+      jest.spyOn(replyRepository, 'create').mockReturnValue(resolveReply);
+      jest.spyOn(replyRepository, 'save').mockResolvedValue(resolveReply);
+      jest
+        .spyOn(replyRepository, 'findOneOrFail')
+        .mockResolvedValue(resolveReply);
+
+      await service.create(createDto, mockSite, mockRequestUser);
+
+      expect(replyUtils.isResolveAdded).toHaveBeenCalledWith('{{{resolved}}}');
+      expect(commentRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ resolved: true }),
+      );
+    });
+
+    it('should not mark comment as resolved if already resolved', async () => {
+      const createDto = {
+        comment_id: 1,
+        message: '{{{resolved}}}',
+      };
+      const resolvedComment = {
+        ...mockComment,
+        resolved: true, // Already resolved
+        get viewed() {
+          return null;
+        },
+      } as Comment;
+
+      // Mock isResolveAdded to return true for the resolve marker
+      (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(true);
+
+      jest
+        .spyOn(commentRepository, 'findOneOrFail')
+        .mockResolvedValue(resolvedComment);
+
+      const resolveReply = {
+        ...mockReply,
+        message: '{{{resolved}}}',
+      };
+      jest.spyOn(replyRepository, 'create').mockReturnValue(resolveReply);
+      jest.spyOn(replyRepository, 'save').mockResolvedValue(resolveReply);
+      jest
+        .spyOn(replyRepository, 'findOneOrFail')
+        .mockResolvedValue(resolveReply);
+
+      await service.create(createDto, mockSite, mockRequestUser);
+
+      // commentRepository.save should NOT be called since comment is already resolved
+      expect(commentRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should not mark comment as resolved if message does not contain resolve marker', async () => {
+      const createDto = {
+        comment_id: 1,
+        message: 'Regular reply without resolve marker',
+      };
+      const unresolvedComment = {
+        ...mockComment,
+        resolved: false,
+        get viewed() {
+          return null;
+        },
+      } as Comment;
+
+      // Mock isResolveAdded to return false
+      (replyUtils.isResolveAdded as jest.Mock).mockReturnValue(false);
+
+      jest
+        .spyOn(commentRepository, 'findOneOrFail')
+        .mockResolvedValue(unresolvedComment);
+      jest.spyOn(replyRepository, 'create').mockReturnValue(mockReply);
+      jest.spyOn(replyRepository, 'save').mockResolvedValue(mockReply);
+      jest.spyOn(replyRepository, 'findOneOrFail').mockResolvedValue(mockReply);
+
+      await service.create(createDto, mockSite, mockRequestUser);
+
+      // commentRepository.save should NOT be called since no resolve marker
+      expect(commentRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('addResolveReply', () => {
+    it('should create a resolve reply', async () => {
+      const resolveReply = {
+        id: 2,
+        comment_id: 1,
+        user_id: 1,
+        message: '{{{resolved}}}',
+        created: new Date(),
+        updated: new Date(),
+      } as Reply;
+
+      jest.spyOn(replyRepository, 'create').mockReturnValue(resolveReply);
+      jest.spyOn(replyRepository, 'save').mockResolvedValue(resolveReply);
+
+      const result = await service.addResolveReply(mockComment, 1);
+
+      expect(replyRepository.create).toHaveBeenCalledWith({
+        comment_id: mockComment.id,
+        user_id: 1,
+        message: '{{{resolved}}}',
+      });
+      expect(replyRepository.save).toHaveBeenCalledWith(resolveReply);
+      expect(result).toEqual(resolveReply);
     });
   });
 
@@ -210,7 +342,7 @@ describe('ReplyService', () => {
         1,
         updateDto,
         mockSite,
-        mockTokenPayload,
+        mockRequestUser,
       );
 
       expect(replyRepository.save).toHaveBeenCalledWith({
@@ -218,22 +350,15 @@ describe('ReplyService', () => {
         message: updateDto.message,
       });
       expect(result).toEqual({
-        id: mockReply.id,
-        comment_id: mockReply.comment_id,
+        ...mockReply,
         message: updateDto.message,
-        created: mockReply.created.toISOString(),
-        updated: mockReply.updated.toISOString(),
-        user_id: mockReply.user_id,
       });
     });
 
-    it('should throw NotFoundException if reply does not exist', async () => {
-      jest.spyOn(replyRepository, 'createQueryBuilder').mockReturnValueOnce({
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(null),
-      } as any);
+    it('should throw error if reply does not exist', async () => {
+      jest
+        .spyOn(replyRepository, 'findOneOrFail')
+        .mockRejectedValue(new Error('Entity not found'));
 
       const updateDto = {
         id: 999,
@@ -241,18 +366,15 @@ describe('ReplyService', () => {
       };
 
       await expect(
-        service.update(999, updateDto, mockSite, mockTokenPayload),
-      ).rejects.toThrow(NotFoundException);
+        service.update(999, updateDto, mockSite, mockRequestUser),
+      ).rejects.toThrow('Entity not found');
     });
 
     it('should throw BadRequestException if user is not the author', async () => {
       const otherUserReply = { ...mockReply, user_id: 2 };
-      jest.spyOn(replyRepository, 'createQueryBuilder').mockReturnValueOnce({
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getOne: jest.fn().mockResolvedValue(otherUserReply),
-      } as any);
+      jest
+        .spyOn(replyRepository, 'findOneOrFail')
+        .mockResolvedValue(otherUserReply);
 
       const updateDto = {
         id: 1,
@@ -260,7 +382,7 @@ describe('ReplyService', () => {
       };
 
       await expect(
-        service.update(1, updateDto, mockSite, mockTokenPayload),
+        service.update(1, updateDto, mockSite, mockRequestUser),
       ).rejects.toThrow(BadRequestException);
     });
   });

@@ -5,6 +5,7 @@ import { User, UserRole } from '../user/user.entity';
 import { Site } from '../site/site.entity';
 import { Comment } from '../comment/comment.entity';
 import { Reply } from '../reply/reply.entity';
+import { COMMENT_PREFIX } from '../comment/comment.entity';
 
 describe('NotificationListener', () => {
   let listener: NotificationListener;
@@ -18,12 +19,10 @@ describe('NotificationListener', () => {
     username: 'testuser',
     password: 'hashed',
     active: true,
-    roles: [UserRole.COMMENTER],
-    secret_token: null,
-    secret_expires: null,
+    roles: [],
     created: new Date(),
     updated: new Date(),
-    userSites: [],
+    sites: [],
     comments: [],
     replies: [],
     commentViews: [],
@@ -33,6 +32,7 @@ describe('NotificationListener', () => {
     id: 1,
     name: 'Test Site',
     license: 'LICENSE-123',
+    url: 'https://test.com',
     domain: 'test.com',
     active: true,
     created: new Date(),
@@ -58,7 +58,10 @@ describe('NotificationListener', () => {
     site: mockSite,
     replies: [],
     views: [],
-  };
+    get viewed() {
+      return null;
+    },
+  } as Comment;
 
   const mockReply: Reply = {
     id: 1,
@@ -73,6 +76,9 @@ describe('NotificationListener', () => {
       id: 2,
       username: 'replyuser',
       email: 'reply@example.com',
+      get color() {
+        return '#00FF00';
+      },
     },
   };
 
@@ -125,7 +131,7 @@ describe('NotificationListener', () => {
         mockComment.user,
         mockSite,
         mockComment.message,
-        mockComment.url,
+        `${mockSite.url}${mockComment.url}#c-${mockComment.uniqid}`,
         'comment',
       );
       expect(notificationService.sendMentionNotification).toHaveBeenCalledWith(
@@ -133,7 +139,7 @@ describe('NotificationListener', () => {
         mockComment.user,
         mockSite,
         mockComment.message,
-        mockComment.url,
+        `${mockSite.url}${mockComment.url}#c-${mockComment.uniqid}`,
         'comment',
       );
     });
@@ -142,7 +148,7 @@ describe('NotificationListener', () => {
       jest.spyOn(notificationService, 'extractMentions').mockReturnValue([]);
 
       await listener.handleCommentCreated({
-        comment: { ...mockComment, message: 'No mentions here' },
+        comment: { ...mockComment, message: 'No mentions here' } as Comment,
         site: mockSite,
       });
 
@@ -172,12 +178,12 @@ describe('NotificationListener', () => {
         mockReply.user,
         mockSite,
         mockReply.message,
-        mockComment.url,
+        `${mockSite.url}${mockComment.url}#${COMMENT_PREFIX}${mockComment.uniqid}`,
         'reply',
       );
     });
 
-    it('should notify comment author when not mentioned', async () => {
+    it('should only notify mentioned users in reply', async () => {
       jest
         .spyOn(notificationService, 'extractMentions')
         .mockReturnValue(['anotheruser']);
@@ -188,18 +194,16 @@ describe('NotificationListener', () => {
         site: mockSite,
       });
 
-      // Should notify mentioned users and comment author
+      // Should only notify mentioned users, not comment author
       expect(notificationService.sendMentionNotification).toHaveBeenCalledTimes(
-        2,
+        1,
       );
-
-      // Check notification to comment author
       expect(notificationService.sendMentionNotification).toHaveBeenCalledWith(
-        mockComment.user.username,
+        'anotheruser',
         mockReply.user,
         mockSite,
         mockReply.message,
-        mockComment.url,
+        `${mockSite.url}${mockComment.url}#${COMMENT_PREFIX}${mockComment.uniqid}`,
         'reply',
       );
     });
@@ -221,11 +225,11 @@ describe('NotificationListener', () => {
       );
     });
 
-    it('should not notify comment author if they are replying', async () => {
+    it('should not notify anyone if no mentions in reply', async () => {
       jest.spyOn(notificationService, 'extractMentions').mockReturnValue([]);
 
       await listener.handleReplyCreated({
-        reply: { ...mockReply, user_id: mockComment.user_id },
+        reply: mockReply,
         comment: mockComment,
         site: mockSite,
       });
@@ -244,7 +248,7 @@ describe('NotificationListener', () => {
       await listener.handleUserInvited({
         user: mockUser,
         site: mockSite,
-        secretToken,
+        invite_token: secretToken,
       });
 
       expect(notificationService.sendInviteNotification).toHaveBeenCalledWith(

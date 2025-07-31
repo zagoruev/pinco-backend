@@ -1,33 +1,53 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Response } from 'express';
-import { ConfigService } from '@nestjs/config';
-import { UnauthorizedException } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User, UserRole } from '../user/user.entity';
+import { Response } from 'express';
+import { LoginDto } from './dto/login.dto';
+import { InviteLoginDto } from './dto/invite-login.dto';
+import { Site } from '../site/site.entity';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: AuthService;
   let response: Response;
 
-  const mockUser: User = {
+  const mockUser = {
     id: 1,
     email: 'test@example.com',
     name: 'Test User',
-    color: '#000000',
     username: 'testuser',
     password: 'hashed',
     active: true,
-    roles: [UserRole.COMMENTER],
-    secret_token: null,
-    secret_expires: null,
+    roles: [UserRole.ADMIN],
+    created: new Date(),
+    updated: new Date(),
+    sites: [],
+    comments: [],
+    replies: [],
+    commentViews: [],
+    get color() {
+      return '#4C53F1';
+    },
+  } as User;
+
+  const mockSite = {
+    id: 1,
+    name: 'Test Site',
+    url: 'https://test.com',
+    domain: 'test.com',
+    license: 'ABC123',
+    active: true,
     created: new Date(),
     updated: new Date(),
     userSites: [],
     comments: [],
-    replies: [],
-    commentViews: [],
+  } as Site;
+
+  const mockAuthService = {
+    login: jest.fn(),
+    loginWithInvite: jest.fn(),
+    setAuthCookie: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -36,16 +56,7 @@ describe('AuthController', () => {
       providers: [
         {
           provide: AuthService,
-          useValue: {
-            login: jest.fn(),
-            loginWithSecret: jest.fn(),
-          },
-        },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: jest.fn(),
-          },
+          useValue: mockAuthService,
         },
       ],
     }).compile();
@@ -58,52 +69,86 @@ describe('AuthController', () => {
       clearCookie: jest.fn(),
       redirect: jest.fn(),
     } as unknown as Response;
+
+    // Reset all mocks
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 
   describe('login', () => {
-    it('should set cookie and return success message', async () => {
-      jest
-        .spyOn(authService, 'login')
-        .mockResolvedValue({ token: 'test-token' });
+    it('should login with email and password', async () => {
+      const loginDto: LoginDto = {
+        email: 'admin@example.com',
+        password: 'password',
+      };
 
-      const result = await controller.login(
-        { email: 'admin@example.com', password: 'password' },
-        response,
-      );
-
-      expect(result).toEqual({ message: 'Login successful' });
-      expect(response.cookie).toHaveBeenCalledWith(
-        'auth-token',
-        'test-token',
-        expect.objectContaining({
-          httpOnly: true,
-          signed: true,
-        }),
-      );
-    });
-  });
-
-  describe('loginWithSecret', () => {
-    it('should set cookie and redirect', async () => {
-      jest.spyOn(authService, 'loginWithSecret').mockResolvedValue({
+      mockAuthService.login.mockResolvedValue({
         token: 'test-token',
         user: mockUser,
       });
 
-      await controller.loginWithSecret({ secret: 'valid-secret' }, response);
+      const result = await controller.login(loginDto, response);
 
-      expect(response.cookie).toHaveBeenCalledWith(
-        'auth-token',
+      expect(authService.login).toHaveBeenCalledWith(loginDto);
+      expect(authService.setAuthCookie).toHaveBeenCalledWith(
+        response,
         'test-token',
-        expect.any(Object),
       );
-      expect(response.redirect).toHaveBeenCalledWith('/');
+      expect(result).toEqual({ user: mockUser.id });
     });
 
-    it('should throw UnauthorizedException if no secret provided', async () => {
+    it('should handle invalid credentials', async () => {
+      const loginDto: LoginDto = {
+        email: 'invalid@example.com',
+        password: 'wrong',
+      };
+
+      mockAuthService.login.mockRejectedValue(new Error('Invalid credentials'));
+
+      await expect(controller.login(loginDto, response)).rejects.toThrow(
+        'Invalid credentials',
+      );
+    });
+  });
+
+  describe('loginWithInvite', () => {
+    it('should login with valid invite token', async () => {
+      const inviteDto: InviteLoginDto = {
+        invite: 'valid-invite-token',
+      };
+
+      mockAuthService.loginWithInvite.mockResolvedValue({
+        token: 'test-token',
+        site: mockSite,
+      });
+
+      await controller.loginWithInvite(inviteDto, response);
+
+      expect(authService.loginWithInvite).toHaveBeenCalledWith(
+        'valid-invite-token',
+      );
+      expect(authService.setAuthCookie).toHaveBeenCalledWith(
+        response,
+        'test-token',
+      );
+      expect(response.redirect).toHaveBeenCalledWith('https://test.com');
+    });
+
+    it('should handle invalid invite token', async () => {
+      const inviteDto: InviteLoginDto = {
+        invite: 'invalid-invite',
+      };
+
+      mockAuthService.loginWithInvite.mockRejectedValue(
+        new Error('Invalid invite token'),
+      );
+
       await expect(
-        controller.loginWithSecret({ secret: '' }, response),
-      ).rejects.toThrow(UnauthorizedException);
+        controller.loginWithInvite(inviteDto, response),
+      ).rejects.toThrow('Invalid invite token');
     });
   });
 
@@ -111,8 +156,8 @@ describe('AuthController', () => {
     it('should clear cookie and return success message', () => {
       const result = controller.logout(response);
 
+      expect(response.clearCookie).toHaveBeenCalledWith('token');
       expect(result).toEqual({ message: 'Logout successful' });
-      expect(response.clearCookie).toHaveBeenCalledWith('auth-token');
     });
   });
 });

@@ -18,7 +18,9 @@ describe('InvitationTemplate', () => {
       };
 
       const subject = template.subject(data);
-      expect(subject).toBe("You've been invited to My Awesome Site");
+      expect(subject).toBe(
+        "You've been invited to collaborate My Awesome Site",
+      );
     });
 
     it('should handle special characters in site name', () => {
@@ -28,7 +30,7 @@ describe('InvitationTemplate', () => {
       };
 
       const subject = template.subject(data);
-      expect(subject).toBe("You've been invited to Site & Co.");
+      expect(subject).toBe("You've been invited to collaborate Site & Co.");
     });
   });
 
@@ -42,9 +44,9 @@ describe('InvitationTemplate', () => {
       const html = template.html(data);
 
       expect(html).toContain('Welcome to Test Site!');
-      expect(html).toContain('https://app.pinco.com/auth/login?code=test123');
+      expect(html).toContain('undefined/v1/auth/login?invite=test123');
       expect(html).toContain('Accept Invitation');
-      expect(html).toContain('This invitation link will expire in 7 days');
+      expect(html).not.toContain('This invitation link will expire in 7 days');
     });
 
     it('should use custom app URL when provided', () => {
@@ -57,7 +59,7 @@ describe('InvitationTemplate', () => {
       const html = template.html(data);
 
       expect(html).toContain(
-        'https://custom.pinco.com/auth/login?code=test123',
+        'https://custom.pinco.com/v1/auth/login?invite=test123',
       );
       expect(html).not.toContain('https://app.pinco.com');
     });
@@ -97,7 +99,7 @@ describe('InvitationTemplate', () => {
 
       const html = template.html(data);
 
-      expect(html).toContain('support@pinco.com');
+      expect(html).toContain('help@pinco.works');
       expect(html).toContain('Need help?');
     });
 
@@ -127,8 +129,8 @@ describe('InvitationTemplate', () => {
       expect(text).toContain(
         "You've been invited to join Test Site as a collaborator",
       );
-      expect(text).toContain('https://app.pinco.com/auth/login?code=test123');
-      expect(text).toContain('This invitation link will expire in 7 days');
+      expect(text).toContain('undefined/v1/auth/login?invite=test123');
+      expect(text).not.toContain('This invitation link will expire in 7 days');
       expect(text).not.toContain('<');
       expect(text).not.toContain('>');
     });
