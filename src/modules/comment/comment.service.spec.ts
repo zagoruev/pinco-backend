@@ -260,6 +260,16 @@ describe('CommentService', () => {
         'https://example.com/screenshots/abc123def4567.jpg',
       );
     });
+
+    it('should throw error when findOne returns null after saving', async () => {
+      jest.spyOn(commentRepository, 'create').mockReturnValue(mockComment);
+      jest.spyOn(commentRepository, 'save').mockResolvedValue(mockComment);
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
+
+      await expect(
+        service.create(createDto, mockSite, mockRequestUser)
+      ).rejects.toThrow('Failed to load created comment');
+    });
   });
 
   describe('update', () => {
@@ -329,6 +339,28 @@ describe('CommentService', () => {
         mockRequestUser.id,
       );
     });
+
+    it('should update reference when provided', async () => {
+      const updateDto: UpdateCommentDto = { id: 1, reference: 'new-reference' };
+      const existingComment = {
+        ...mockComment,
+        reference: 'old-reference',
+      } as Comment;
+
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(existingComment);
+      jest.spyOn(commentRepository, 'save').mockResolvedValue({
+        ...existingComment,
+        reference: 'new-reference',
+      } as Comment);
+      jest.spyOn(screenshotService, 'getUrl').mockReturnValue('screenshot-url');
+
+      const result = await service.update(1, updateDto, mockSite, mockRequestUser);
+
+      expect(result.reference).toBe('new-reference');
+      expect(commentRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ reference: 'new-reference' })
+      );
+    });
   });
 
   describe('markAsViewed', () => {
@@ -376,6 +408,14 @@ describe('CommentService', () => {
       });
       expect(commentViewRepository.save).not.toHaveBeenCalled();
     });
+
+    it('should throw NotFoundException if comment not found', async () => {
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
+
+      await expect(
+        service.markAsViewed(999, mockSite, mockRequestUser)
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 
   describe('markAsUnviewed', () => {
@@ -393,6 +433,14 @@ describe('CommentService', () => {
         viewed: null,
         user_id: mockRequestUser.id,
       });
+    });
+
+    it('should throw NotFoundException if comment not found', async () => {
+      jest.spyOn(commentRepository, 'findOne').mockResolvedValue(null);
+
+      await expect(
+        service.markAsUnviewed(999, mockSite, mockRequestUser)
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

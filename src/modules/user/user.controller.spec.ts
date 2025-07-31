@@ -185,12 +185,9 @@ describe('UserController', () => {
         roles: [UserRole.ADMIN],
       };
 
-      const result = await controller.create(createDto, mockRequestUser);
+      const result = await controller.create(createDto);
 
-      expect(userService.create).toHaveBeenCalledWith(
-        createDto,
-        mockRequestUser,
-      );
+      expect(userService.create).toHaveBeenCalledWith(createDto);
       expect(result).toEqual(mockUser);
     });
   });
