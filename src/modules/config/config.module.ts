@@ -6,7 +6,7 @@ import {
   databaseConfig,
   emailConfig,
   screenshotConfig,
-} from 'src/config';
+} from '../../config';
 
 @Global()
 @Module({

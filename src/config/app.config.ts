@@ -2,6 +2,7 @@ import { registerAs } from '@nestjs/config';
 import parse from 'parse-duration';
 
 export default registerAs('app', () => ({
+  isDev: process.env.NODE_ENV === 'development',
   port: parseInt(process.env.PORT!, 10),
   url: process.env.APP_URL!,
   apiPrefix: process.env.API_PREFIX!,

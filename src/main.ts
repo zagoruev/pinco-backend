@@ -5,7 +5,7 @@ import { AppModule } from './app.module';
 import { VersioningType, ClassSerializerInterceptor } from '@nestjs/common';
 import { AppConfigService } from './modules/config/config.service';
 
-async function bootstrap() {
+export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(AppConfigService);
 
@@ -31,7 +31,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (configService.get('app.isDev')) {
     const config = new DocumentBuilder()
       .setTitle('Pinco Backend API')
       .setDescription('The annotation widget backend API')
@@ -47,4 +47,6 @@ async function bootstrap() {
   console.log(`Application is running on: ${url}/${apiPrefix}`);
 }
 
-void bootstrap();
+if (require.main === module) {
+  void bootstrap();
+}

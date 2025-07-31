@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { USER_COLORS } from '../user/user.entity';
-import { RequestUser } from 'src/types/express';
+import { RequestUser } from '../../types/express';
 import { AppConfigService } from '../config/config.service';
+
 interface PincoConfig {
   apiRoot: string;
   colors: string[];
@@ -19,12 +20,9 @@ export class WidgetService {
   ): string {
     const attributeStrings = Object.entries(attributes)
       .map(([key, value]) => `${key} = '${value}';`)
-      .join('\n      ');
+      .join('\n        ');
 
-    return `
-      var element = document.createElement('${tagName}');
-      ${attributeStrings}
-      document.head.appendChild(element);`;
+    return `var element = document.createElement('${tagName}');${attributeStrings}document.head.appendChild(element);`;
   }
 
   private generateWidgetScriptElements(isDev: boolean): string {
@@ -63,11 +61,11 @@ export class WidgetService {
 
     return `var Pinco = ${JSON.stringify(pincoConfig, null, 4)};
       (function() {
-          var root = document.createElement('div');
-          root.id = 'pinco-ui';
-          root.dir = 'ltr';
-          document.body.appendChild(root);
-          ${this.generateWidgetScriptElements(isDev)}
-      })();`;
+        var root = document.createElement('div');
+        root.id = 'pinco-ui';
+        root.dir = 'ltr';
+        document.body.appendChild(root);
+        ${this.generateWidgetScriptElements(isDev)}}
+      )();`;
   }
 }

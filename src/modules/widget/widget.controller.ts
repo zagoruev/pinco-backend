@@ -2,17 +2,16 @@ import { Controller, Get, Header, Query, UseGuards } from '@nestjs/common';
 import { WidgetService } from './widget.service';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CookieAuthGuard } from 'src/common/guards/cookie-auth.guard';
-import { OptionalAuth } from 'src/common/decorators/optional-auth.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { RequestUser } from 'src/types/express';
-// import { OriginGuard } from 'src/common/guards/origin.guard';
-
+import { CookieAuthGuard } from '../../common/guards/cookie-auth.guard';
+import { OptionalAuth } from '../../common/decorators/optional-auth.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestUser } from '../../types/express';
+import { OriginGuard } from '../../common/guards/origin.guard';
 @Controller({
   version: VERSION_NEUTRAL,
 })
 @ApiTags('widget')
-@UseGuards(CookieAuthGuard)
+@UseGuards(CookieAuthGuard, OriginGuard)
 @OptionalAuth()
 export class WidgetController {
   constructor(private readonly widgetService: WidgetService) {}
