@@ -4,7 +4,6 @@
   "description": "NestJS backend for Pinco collaboration widget",
   "author": "Pinco",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -12,10 +11,6 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
-    "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:stop": "pm2 stop ecosystem.config.js",
-    "pm2:reload": "pm2 reload ecosystem.config.js",
-    "pm2:logs": "pm2 logs",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --ignore-pattern '**/*.spec.ts' --ignore-pattern '**/*.e2e-spec.ts' --ignore-pattern 'test/fixtures/**/*.ts' --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -44,8 +39,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
-    "express-rate-limit": "^8.0.1",
-    "helmet": "^8.1.0",
+    "cookie-signature": "^1.2.2",
     "joi": "^17.13.3",
     "multer": "^2.0.2",
     "mysql2": "^3.14.2",
@@ -54,8 +48,7 @@
     "parse-duration": "^2.1.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.25",
-    "winston": "^3.17.0"
+    "typeorm": "^0.3.25"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

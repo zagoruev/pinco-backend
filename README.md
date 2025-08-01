@@ -21,23 +21,27 @@ Annotation widget backend built with NestJS, TypeORM, and MySQL.
 ## Installation
 
 1. Clone the repository
+
 ```bash
 git clone <repository-url>
 cd backend
 ```
 
 2. Install dependencies
+
 ```bash
 yarn install
 ```
 
 3. Set up environment variables
+
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
 4. Run database migrations
+
 ```bash
 yarn migration:run
 ```
@@ -70,37 +74,6 @@ yarn build
 ./scripts/build.sh
 ```
 
-### Deployment with PM2
-
-```bash
-# Start with PM2
-yarn pm2:start
-
-# View logs
-yarn pm2:logs
-
-# Reload
-yarn pm2:reload
-
-# Stop
-yarn pm2:stop
-```
-
-### Docker Deployment
-
-```bash
-# Build image
-docker build -t pinco-backend .
-
-# Run container
-docker run -d \
-  -p 3000:3000 \
-  --env-file .env \
-  -v ./screenshots:/app/screenshots \
-  -v ./logs:/app/logs \
-  pinco-backend
-```
-
 ## API Documentation
 
 Once the application is running, visit `/docs` to view the Swagger API documentation.
@@ -120,24 +93,8 @@ src/
     ├── reply/        # Comment replies
     ├── screenshot/   # Screenshot handling
     ├── site/         # Site management
-    └── user/         # User management
-```
-
-## Environment Variables
-
-See `.env.example` for all available configuration options.
-
-## Testing
-
-```bash
-# Unit tests
-yarn test
-
-# E2E tests
-yarn test:e2e
-
-# Test coverage
-yarn test:cov
+    ├── user/         # User management
+    └── widget/       # Widget generation
 ```
 
 ## License
