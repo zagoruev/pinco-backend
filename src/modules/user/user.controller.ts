@@ -42,6 +42,7 @@ export class UserController {
   ) {}
 
   @Get('me')
+  @SerializeOptions({ groups: ['backoffice'] })
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({ status: 200, description: 'Return current user' })
   async getCurrentUser(@CurrentUser() currentUser: RequestUser) {
@@ -63,6 +64,7 @@ export class UserController {
   }
 
   @Get()
+  @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
   @ApiOperation({ summary: 'Get all site users' })
   @ApiResponse({ status: 200, description: 'Return all site users' })

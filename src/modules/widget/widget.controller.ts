@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-import { Controller, Get, Header, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Query, Req, SerializeOptions, UseGuards } from '@nestjs/common';
 import { VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -20,6 +20,7 @@ export class WidgetController {
   constructor(private readonly widgetService: WidgetService) {}
 
   @Get('widget.js')
+  @SerializeOptions({ groups: ['widget'] })
   @Header('Content-Type', 'application/javascript')
   @Header('Access-Control-Allow-Origin', '*')
   @Header('Access-Control-Allow-Methods', 'GET')
