@@ -66,6 +66,7 @@ export class WidgetService {
 
     const site = await this.siteRepository.findOne({
       where: { domain, active: true },
+      relations: ['userSites'],
     });
 
     if (!site) {
@@ -79,8 +80,9 @@ export class WidgetService {
     };
 
     const isDev = Boolean(this.configService.get('app.widgetIsDev'));
+    const isUserBelongsToSite = site.userSites.some((site) => site.user_id === user.id);
 
-    if (user) {
+    if (user && isUserBelongsToSite) {
       pincoConfig.userId = Number(user.id);
     }
 
