@@ -80,7 +80,7 @@ export class WidgetService {
     };
 
     const isDev = Boolean(this.configService.get('app.widgetIsDev'));
-    const isUserBelongsToSite = site.userSites.some((site) => site.user_id === user.id);
+    const isUserBelongsToSite = user ? site.userSites?.some((site) => site.user_id === Number(user.id)) : false;
 
     if (user && isUserBelongsToSite) {
       pincoConfig.userId = Number(user.id);

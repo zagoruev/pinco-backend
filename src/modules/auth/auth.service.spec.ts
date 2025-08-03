@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { Repository } from 'typeorm';
 
@@ -13,6 +13,8 @@ import { UserSiteService } from '../user/user-site.service';
 import { User, UserRole } from '../user/user.entity';
 import { AuthService } from './auth.service';
 import { TokenService } from './token.service';
+
+jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -82,7 +84,7 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('should return user for valid credentials', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
-      jest.spyOn(argon2, 'verify').mockResolvedValue(true);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.validateUser('admin@example.com', 'password');
 
@@ -94,7 +96,7 @@ describe('AuthService', () => {
 
     it('should return null for invalid password', async () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
-      jest.spyOn(argon2, 'verify').mockResolvedValue(false);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       const result = await service.validateUser('admin@example.com', 'wrong-password');
 
@@ -110,7 +112,7 @@ describe('AuthService', () => {
         },
       } as User;
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(regularUser);
-      jest.spyOn(argon2, 'verify').mockResolvedValue(true);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.validateUser('user@example.com', 'password');
 

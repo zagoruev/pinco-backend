@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 
 import {
@@ -37,7 +37,7 @@ export class UserService {
       throw new ConflictException('User with this username already exists');
     }
 
-    const hashedPassword = await argon2.hash(createUserDto.password);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const user = this.userRepository.create({
       ...createUserDto,

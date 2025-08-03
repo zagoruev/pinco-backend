@@ -1,13 +1,14 @@
-import { DataSource } from 'typeorm';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { config } from 'dotenv';
 import * as readline from 'readline';
-import { User, UserRole } from '../src/modules/user/user.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
-import { Site } from '../src/modules/site/site.entity';
+import { DataSource } from 'typeorm';
+
+import { CommentView } from '../src/modules/comment/comment-view.entity';
 import { Comment } from '../src/modules/comment/comment.entity';
 import { Reply } from '../src/modules/reply/reply.entity';
-import { CommentView } from '../src/modules/comment/comment-view.entity';
+import { Site } from '../src/modules/site/site.entity';
+import { UserSite } from '../src/modules/user/user-site.entity';
+import { User, UserRole } from '../src/modules/user/user.entity';
 
 config({ quiet: true });
 
@@ -144,9 +145,7 @@ async function collectUserData() {
     if (!username) {
       console.log('Username cannot be empty. Please try again.\n');
     } else if (username.length < 3) {
-      console.log(
-        'Username must be at least 3 characters long. Please try again.\n',
-      );
+      console.log('Username must be at least 3 characters long. Please try again.\n');
       username = '';
     }
   } while (!username);
@@ -168,9 +167,7 @@ async function collectUserData() {
     if (!password) {
       console.log('Password cannot be empty. Please try again.\n');
     } else if (password.length < 4) {
-      console.log(
-        'Password must be at least 4 characters long. Please try again.\n',
-      );
+      console.log('Password must be at least 4 characters long. Please try again.\n');
       password = '';
     }
   } while (!password);
@@ -215,9 +212,7 @@ async function seedRoot() {
     });
 
     if (existingUsername) {
-      console.log(
-        `\nError: User with username ${userData.username} already exists`,
-      );
+      console.log(`\nError: User with username ${userData.username} already exists`);
       rl.close();
       await AppDataSource.destroy();
       return;
@@ -225,7 +220,7 @@ async function seedRoot() {
 
     // Hash password
     console.log('\nHashing password...');
-    const hashedPassword = await argon2.hash(userData.password);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     // Create root user
     const rootUser = userRepository.create({

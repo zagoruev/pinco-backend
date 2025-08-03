@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -14,7 +14,7 @@ import { UserSiteService } from './user-site.service';
 import { User, UserRole } from './user.entity';
 import { UserService } from './user.service';
 
-jest.mock('argon2');
+jest.mock('bcrypt');
 
 describe('UserService', () => {
   let service: UserService;
@@ -125,12 +125,12 @@ describe('UserService', () => {
       jest.spyOn(userRepository, 'save').mockResolvedValue(mockUser);
       jest.spyOn(userSiteRepository, 'create').mockImplementation((data) => data as UserSite);
       jest.spyOn(userSiteRepository, 'find').mockResolvedValue([{ user_id: 1, site_id: 1 } as UserSite]);
-      (argon2.hash as jest.Mock).mockResolvedValue('hashed-password');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
 
       const result = await service.create(createDto);
 
       expect(result).toEqual(mockUser);
-      expect(argon2.hash).toHaveBeenCalledWith(createDto.password);
+      expect(bcrypt.hash).toHaveBeenCalledWith(createDto.password, 10);
       expect(userRepository.save).toHaveBeenCalled();
     });
 

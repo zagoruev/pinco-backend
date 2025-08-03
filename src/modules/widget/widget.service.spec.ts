@@ -40,6 +40,7 @@ describe('WidgetService', () => {
     active: true,
     created: new Date(),
     updated: new Date(),
+    userSites: [{ user_id: 1, site_id: 1 }],
   } as Site;
 
   const mockRequest = {
@@ -100,6 +101,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'test.com', active: true },
+        relations: ['userSites'],
       });
 
       expect(result).toContain('var Pinco = {');
@@ -172,6 +174,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'test.com', active: true },
+        relations: ['userSites'],
       });
       expect(result).toContain('var Pinco = {');
     });
@@ -192,6 +195,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'test.com', active: true },
+        relations: ['userSites'],
       });
       expect(result).toBe('console.info("Pinco: site not found");');
     });
@@ -236,7 +240,7 @@ describe('WidgetService', () => {
     });
 
     it('should handle user with numeric string id', async () => {
-      mockSiteRepository.findOne.mockResolvedValueOnce(mockSite);
+      mockSiteRepository.findOne.mockResolvedValueOnce({ ...mockSite, userSites: [{ user_id: 123, site_id: 1 }] });
       const userWithStringId: RequestUser = {
         ...mockRequestUser,
         id: '123' as unknown as number,
@@ -275,6 +279,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'secure.test.com', active: true },
+        relations: ['userSites'],
       });
       expect(result).toContain('var Pinco = {');
     });
@@ -292,6 +297,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'app.test.com', active: true },
+        relations: ['userSites'],
       });
       expect(result).toContain('var Pinco = {');
     });
@@ -309,6 +315,7 @@ describe('WidgetService', () => {
 
       expect(siteRepository.findOne).toHaveBeenCalledWith({
         where: { domain: 'localhost', active: true },
+        relations: ['userSites'],
       });
       expect(result).toContain('var Pinco = {');
     });
@@ -331,7 +338,7 @@ describe('WidgetService', () => {
     });
 
     it('should handle edge case with zero user id', async () => {
-      mockSiteRepository.findOne.mockResolvedValueOnce(mockSite);
+      mockSiteRepository.findOne.mockResolvedValueOnce({ ...mockSite, userSites: [{ user_id: 0, site_id: 1 }] });
       const userWithZeroId: RequestUser = {
         ...mockRequestUser,
         id: 0,
@@ -340,6 +347,15 @@ describe('WidgetService', () => {
       const result = await service.generateWidgetScript('test-key', userWithZeroId, mockRequest);
 
       expect(result).toContain('"userId": 0');
+    });
+
+    it('should not include userId when user does not belong to site', async () => {
+      mockSiteRepository.findOne.mockResolvedValueOnce({ ...mockSite, userSites: [{ user_id: 999, site_id: 1 }] });
+
+      const result = await service.generateWidgetScript('test-key', mockRequestUser, mockRequest);
+
+      expect(result).toContain('var Pinco = {');
+      expect(result).not.toContain('"userId"');
     });
   });
 });

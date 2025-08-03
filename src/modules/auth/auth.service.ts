@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { Repository } from 'typeorm';
 
@@ -31,7 +31,7 @@ export class AuthService {
       return null;
     }
 
-    const isPasswordValid = await argon2.verify(user.password, password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return null;
     }
