@@ -3,12 +3,12 @@ import { config } from 'dotenv';
 import * as readline from 'readline';
 import { DataSource } from 'typeorm';
 
-import { CommentView } from '../src/modules/comment/comment-view.entity';
-import { Comment } from '../src/modules/comment/comment.entity';
-import { Reply } from '../src/modules/reply/reply.entity';
-import { Site } from '../src/modules/site/site.entity';
-import { UserSite } from '../src/modules/user/user-site.entity';
-import { User, UserRole } from '../src/modules/user/user.entity';
+import { CommentView } from '../modules/comment/comment-view.entity';
+import { Comment } from '../modules/comment/comment.entity';
+import { Reply } from '../modules/reply/reply.entity';
+import { Site } from '../modules/site/site.entity';
+import { UserSite } from '../modules/user/user-site.entity';
+import { User, UserRole } from '../modules/user/user.entity';
 
 config({ quiet: true });
 

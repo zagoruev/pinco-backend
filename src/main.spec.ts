@@ -75,7 +75,7 @@ describe('Main Bootstrap', () => {
     mockConfigService = {
       get: jest.fn((key: string) => {
         const config: Record<string, any> = {
-          'app.url': 'http://localhost:3000',
+          'app.url': 'http://localhost',
           'app.apiPrefix': 'api',
           'app.port': 3000,
           'app.authSecret': 'test-secret',
@@ -147,7 +147,7 @@ describe('Main Bootstrap', () => {
   it('should not set global prefix when apiPrefix is empty', async () => {
     mockConfigService.get = jest.fn((key: string) => {
       const config: Record<string, any> = {
-        'app.url': 'http://localhost:3000',
+        'app.url': 'http://localhost',
         'app.apiPrefix': '',
         'app.port': 3000,
         'app.authSecret': 'test-secret',
@@ -166,7 +166,7 @@ describe('Main Bootstrap', () => {
     it('should setup Swagger in development environment', async () => {
       mockConfigService.get = jest.fn((key: string) => {
         const config: Record<string, any> = {
-          'app.url': 'http://localhost:3000',
+          'app.url': 'http://localhost',
           'app.apiPrefix': 'api',
           'app.port': 3000,
           'app.authSecret': 'test-secret',
@@ -189,7 +189,7 @@ describe('Main Bootstrap', () => {
     it('should not setup Swagger in production environment', async () => {
       mockConfigService.get = jest.fn((key: string) => {
         const config: Record<string, any> = {
-          'app.url': 'http://localhost:3000',
+          'app.url': 'http://localhost',
           'app.apiPrefix': 'api',
           'app.port': 3000,
           'app.authSecret': 'test-secret',
@@ -222,7 +222,7 @@ describe('Main Bootstrap', () => {
     expect(mockApp.setGlobalPrefix).toHaveBeenCalledWith('v1');
     expect(mockApp.listen).toHaveBeenCalledWith(8080);
     expect(cookieParser).toHaveBeenCalledWith('prod-secret');
-    expect(console.log).toHaveBeenCalledWith('Application is running on: https://api.example.com/v1');
+    expect(console.log).toHaveBeenCalledWith('Application is running on: https://api.example.com:8080/v1');
   });
 
   it('should configure all middleware and interceptors', async () => {
