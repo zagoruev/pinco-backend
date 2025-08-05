@@ -41,7 +41,7 @@ describe('Config Index', () => {
     it('should validate a complete valid configuration', () => {
       const validConfig = {
         DB_HOST: 'localhost',
-        DB_PORT: 3306,
+        DB_PORT: 5432,
         DB_USERNAME: 'root',
         DB_PASSWORD: 'password',
         DB_DATABASE: 'test_db',
@@ -147,7 +147,7 @@ describe('Config Index', () => {
 
       const { error, value } = validationSchema.validate(minimalConfig);
       expect(error).toBeUndefined();
-      expect(value.DB_PORT).toBe(3306);
+      expect(value.DB_PORT).toBe(5432);
       expect(value.PORT).toBe(3000);
       expect(value.API_PREFIX).toBe('api');
       expect(value.SMTP_PORT).toBe(587);

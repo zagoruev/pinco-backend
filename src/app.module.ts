@@ -25,7 +25,7 @@ import { WidgetModule } from './modules/widget/widget.module';
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
       useFactory: (configService: AppConfigService) => ({
-        type: 'mysql',
+        type: 'postgres',
         host: configService.get('database.host'),
         port: configService.get('database.port'),
         username: configService.get('database.username'),

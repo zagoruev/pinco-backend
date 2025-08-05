@@ -41,7 +41,7 @@ describe('Database Config', () => {
 
     expect(config).toEqual({
       host: 'localhost',
-      port: 3306,
+      port: 5432,
       username: 'root',
       password: 'password',
       database: 'pinco',
@@ -59,7 +59,7 @@ describe('Database Config', () => {
 
     expect(config).toEqual({
       host: 'localhost',
-      port: 3306,
+      port: 5432,
       username: 'root',
       password: 'password',
       database: 'pinco',
@@ -87,7 +87,7 @@ describe('Database Config', () => {
 
     expect(config).toEqual({
       host: 'custom-host.com',
-      port: 3306,
+      port: 5432,
       username: 'root',
       password: 'password',
       database: 'custom_db',

@@ -52,8 +52,10 @@ export class User {
 
   @Expose({ groups: ['backoffice'] })
   @Column({
-    type: 'simple-array',
-    default: '',
+    type: 'enum',
+    enum: UserRole,
+    array: true,
+    default: [],
   })
   roles: UserRole[];
 

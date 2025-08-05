@@ -20,8 +20,10 @@ export class UserSite {
   invite_code: string | null;
 
   @Column({
-    type: 'simple-array',
-    default: '',
+    type: 'enum',
+    enum: UserSiteRole,
+    array: true,
+    default: [],
   })
   roles: UserSiteRole[];
 
