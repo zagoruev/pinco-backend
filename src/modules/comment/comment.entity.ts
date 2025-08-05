@@ -66,7 +66,9 @@ export class Comment {
   screenshot: string | null;
 
   @Expose()
-  @Transform(({ value }: { value: Date }) => value.toISOString().slice(0, 19).replace('T', ' '), { groups: ['widget'] })
+  @Transform(({ value }: { value: Date | null }) => value?.toISOString().slice(0, 19).replace('T', ' ') ?? null, {
+    groups: ['widget'],
+  })
   get viewed(): Date | null {
     return this.views?.find((view) => view.user_id === this.user_id)?.viewed || null;
   }
