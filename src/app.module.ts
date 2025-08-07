@@ -44,7 +44,7 @@ import { WidgetModule } from './modules/widget/widget.module';
             imports: [AppConfigModule],
             useFactory: (configService: AppConfigService) => [
               {
-                rootPath: path.join(__dirname, '..', '..', configService.get('screenshot.baseDir')),
+                rootPath: path.join(__dirname, '..', configService.get('screenshot.baseDir')),
                 serveRoot: '/screenshots',
                 serveStaticOptions: {
                   index: false,
