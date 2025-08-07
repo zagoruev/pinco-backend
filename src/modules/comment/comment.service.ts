@@ -44,6 +44,7 @@ export class CommentService {
 
     return comments.map((comment) => {
       comment.screenshot = this.screenshotService.getUrl(comment);
+      comment.viewed = comment.views?.find((view) => view.user_id === currentUser.id)?.viewed || null;
       return comment;
     });
   }
@@ -124,6 +125,7 @@ export class CommentService {
     }
 
     savedComment.screenshot = this.screenshotService.getUrl(savedComment);
+    savedComment.viewed = savedComment.views?.find((view) => view.user_id === currentUser.id)?.viewed || null;
 
     return savedComment;
   }
