@@ -50,6 +50,13 @@ export class UserController {
     return user;
   }
 
+  @Get('me/id')
+  @ApiOperation({ summary: 'Get current user id' })
+  @ApiResponse({ status: 200, description: 'Return current user id' })
+  getCurrentUserId(@CurrentUser() currentUser: RequestUser) {
+    return currentUser.id;
+  }
+
   @Post()
   @SerializeOptions({ groups: ['backoffice'] })
   @Roles(UserRole.ROOT)
