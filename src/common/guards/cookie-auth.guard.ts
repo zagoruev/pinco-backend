@@ -30,14 +30,18 @@ export class CookieAuthGuard implements CanActivate {
     ]);
 
     const request = context.switchToHttp().getRequest<RequestWithToken>();
-    const token = this.extractTokenFromCookie(request, isOptional);
+    const token = this.extractTokenFromCookie(request);
 
     if (!token && isOptional) {
       return true;
     }
 
+    if (!token) {
+      throw new UnauthorizedException('No authentication token found');
+    }
+
     try {
-      const user = this.tokenService.verifyToken(token!);
+      const user = this.tokenService.verifyToken(token);
       const sites = await this.siteService.getUserSites(user.id);
 
       request.user = {
@@ -46,23 +50,11 @@ export class CookieAuthGuard implements CanActivate {
       };
       return true;
     } catch {
-      if (isOptional) {
-        return true;
-      }
       throw new UnauthorizedException('Invalid authentication token');
     }
   }
 
-  private extractTokenFromCookie(request: RequestWithToken, isOptional?: boolean): string | null {
-    const token = request.signedCookies.token;
-
-    if (!token) {
-      if (isOptional) {
-        return null;
-      }
-      throw new UnauthorizedException('No authentication token found');
-    }
-
-    return token;
+  private extractTokenFromCookie(request: RequestWithToken): string | undefined {
+    return request.signedCookies.token;
   }
 }

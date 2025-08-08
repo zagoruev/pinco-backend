@@ -69,9 +69,7 @@ export class Comment {
   @Transform(({ value }: { value: Date | null }) => value?.toISOString().slice(0, 19).replace('T', ' ') ?? null, {
     groups: ['widget'],
   })
-  get viewed(): Date | null {
-    return this.views?.find((view) => view.user_id === this.user_id)?.viewed || null;
-  }
+  viewed: Date | null;
 
   @Exclude()
   @ManyToOne(() => User, (user) => user.comments)
