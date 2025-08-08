@@ -130,35 +130,23 @@ export class CommentService {
     return savedComment;
   }
 
-  async markAsViewed(id: number, site: Site, currentUser: RequestUser): Promise<{ viewed: Date; user_id: number }> {
+  async markAsViewed(id: number, site: Site, currentUser: RequestUser): Promise<CommentView> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
-      relations: ['views'],
     });
 
     if (!comment) {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
 
-    const isAlreadyViewed = comment.views.find((view) => view.user_id === currentUser.id);
-
-    if (isAlreadyViewed) {
-      return { viewed: isAlreadyViewed.viewed, user_id: currentUser.id };
-    }
-
-    const viewRecord = await this.commentViewRepository.save({
+    return await this.commentViewRepository.save({
       comment_id: id,
       user_id: currentUser.id,
       viewed: new Date(),
     });
-
-    return {
-      viewed: viewRecord.viewed,
-      user_id: viewRecord.user_id,
-    };
   }
 
-  async markAsUnviewed(id: number, site: Site, currentUser: RequestUser): Promise<{ viewed: null; user_id: number }> {
+  async markAsUnviewed(id: number, site: Site, currentUser: RequestUser): Promise<void> {
     const comment = await this.commentRepository.findOne({
       where: { id, site_id: site.id },
     });
@@ -172,10 +160,7 @@ export class CommentService {
       user_id: currentUser.id,
     });
 
-    return {
-      viewed: null,
-      user_id: currentUser.id,
-    };
+    return;
   }
 
   async markAllAsViewed(site: Site, currentUser: RequestUser): Promise<void> {
