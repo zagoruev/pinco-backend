@@ -12,7 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, NoFilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -82,7 +82,7 @@ export class CommentController {
   @Post(':id')
   @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
-  @UseInterceptors(FileInterceptor(''))
+  @UseInterceptors(NoFilesInterceptor)
   @ApiOperation({ summary: 'Update a comment' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateCommentDto })

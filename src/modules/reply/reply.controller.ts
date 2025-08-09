@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 
 import { Body, Controller, Get, Param, Post, SerializeOptions, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { NoFilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -51,8 +51,7 @@ export class ReplyController {
   @Post()
   @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
-  // @TODO: Remove this once we use multipart only for file uploads
-  @UseInterceptors(FileInterceptor(''))
+  @UseInterceptors(NoFilesInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new reply' })
   @ApiBody({ type: CreateReplyDto })
@@ -64,8 +63,7 @@ export class ReplyController {
   @Post(':id')
   @SerializeOptions({ groups: ['widget'] })
   @UseGuards(OriginGuard)
-  // @TODO: Remove this once we use multipart only for file uploads
-  @UseInterceptors(FileInterceptor(''))
+  @UseInterceptors(NoFilesInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Update a reply' })
   @ApiBody({ type: UpdateReplyDto })
